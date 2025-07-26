@@ -13,10 +13,12 @@ pub struct EmptyObject {}
 pub struct Checkout {
     pub id: String,
     pub status: String, // PENDING, FAILED, PAID
-    pub checkout_reference: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checkout_reference: Option<String>,
     pub amount: f64,
     pub currency: String,
-    pub merchant_code: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merchant_code: Option<String>,
     pub date: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -30,7 +32,7 @@ pub struct Checkout {
     pub mandate: Option<Mandate>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub transactions: Vec<Transaction>,
-    // Fields that appear in some responses but not others
+    // Fields from retrieve/list responses
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub transaction_code: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -39,6 +41,8 @@ pub struct Checkout {
     pub merchant_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub redirect_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub payment_instrument: Option<PaymentInstrumentToken>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -76,16 +80,20 @@ pub struct ProcessCheckoutRequest {
 pub struct DeletedCheckout {
     pub id: String,
     pub status: String, // EXPIRED
-    pub checkout_reference: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checkout_reference: Option<String>,
     pub amount: f64,
     pub currency: String,
     pub merchant_code: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    pub purpose: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub purpose: Option<String>,
     pub date: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub valid_until: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub transactions: Vec<Transaction>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -423,6 +431,11 @@ pub struct Mandate {
     pub mandate_type: String,
     pub status: String,
     pub merchant_code: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaymentInstrumentToken {
+    pub token: String,
 }
 
 //================================================================================

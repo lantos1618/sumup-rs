@@ -1,83 +1,150 @@
-use crate::{SumUpClient, Result, CreateCheckoutRequest, Checkout, ProcessCheckoutRequest, DeletedCheckout, AvailablePaymentMethodsResponse, Error};
+use crate::{SumUpClient, Result, CreateCheckoutRequest, Checkout, ProcessCheckoutRequest, DeletedCheckout, AvailablePaymentMethodsResponse};
 
 impl SumUpClient {
     /// Lists created checkout resources according to the applied checkout_reference.
+    ///
+    /// # Arguments
+    /// * `checkout_reference` - Unique ID of the payment checkout specified by the client application.
     pub async fn list_checkouts(&self, checkout_reference: Option<&str>) -> Result<Vec<Checkout>> {
-        // TODO: Implement the actual HTTP request logic
-        // 1. Build URL with query parameters
-        // 2. Make GET request with Authorization header
-        // 3. Deserialize response
-        unimplemented!();
+        let mut url = self.build_url("/v0.1/checkouts")?;
+
+        if let Some(ref_code) = checkout_reference {
+            url.query_pairs_mut()
+                .append_pair("checkout_reference", ref_code);
+        }
+
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+
+        if response.status().is_success() {
+            let checkouts = response.json::<Vec<Checkout>>().await?;
+            Ok(checkouts)
+        } else {
+            self.handle_error(response).await
+        }
     }
 
     /// Creates a new payment checkout resource.
+    ///
+    /// # Arguments
+    /// * `body` - The request body containing the details for the new checkout.
     pub async fn create_checkout(&self, body: &CreateCheckoutRequest) -> Result<Checkout> {
-        // 1. Build URL for POST /v0.1/checkouts
         let url = self.build_url("/v0.1/checkouts")?;
 
-        // 2. Make POST request
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(url)
             .bearer_auth(&self.api_key)
             .json(body)
             .send()
             .await?;
 
-        // 3. Handle response
         if response.status().is_success() {
             let checkout = response.json::<Checkout>().await?;
             Ok(checkout)
         } else {
-            let status = response.status().as_u16();
-            let message = response.text().await.unwrap_or_default();
-            Err(Error::ApiError { status, message })
+            self.handle_error(response).await
         }
     }
 
     /// Retrieves an identified checkout resource.
+    ///
+    /// # Arguments
+    /// * `checkout_id` - The unique ID of the checkout resource.
     pub async fn retrieve_checkout(&self, checkout_id: &str) -> Result<Checkout> {
-        // 1. Build URL with path parameter: /v0.1/checkouts/{id}
         let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
 
-        // 2. Make GET request
-        let response = self.http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
 
-        // 3. Handle response
         if response.status().is_success() {
             let checkout = response.json::<Checkout>().await?;
             Ok(checkout)
         } else {
-            let status = response.status().as_u16();
-            let message = response.text().await.unwrap_or_default();
-            Err(Error::ApiError { status, message })
+            self.handle_error(response).await
         }
     }
 
     /// Processing a checkout will attempt to charge the provided payment instrument.
-    pub async fn process_checkout(&self, checkout_id: &str, body: &ProcessCheckoutRequest) -> Result<Checkout> {
-        // TODO: Implement the actual HTTP request logic for PUT /v0.1/checkouts/{id}
-        unimplemented!();
+    ///
+    /// # Arguments
+    /// * `checkout_id` - The unique ID of the checkout resource to process.
+    /// * `body` - The request body containing payment details.
+    pub async fn process_checkout(
+        &self,
+        checkout_id: &str,
+        body: &ProcessCheckoutRequest,
+    ) -> Result<Checkout> {
+        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
+
+        let response = self
+            .http_client
+            .put(url)
+            .bearer_auth(&self.api_key)
+            .json(body)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let checkout = response.json::<Checkout>().await?;
+            Ok(checkout)
+        } else {
+            self.handle_error(response).await
+        }
     }
 
     /// Deactivates an identified checkout resource.
+    ///
+    /// # Arguments
+    /// * `checkout_id` - The unique ID of the checkout resource to deactivate.
     pub async fn deactivate_checkout(&self, checkout_id: &str) -> Result<DeletedCheckout> {
-        // TODO: Implement the actual HTTP request logic for DELETE /v0.1/checkouts/{id}
-        unimplemented!();
+        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
+
+        let response = self
+            .http_client
+            .delete(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let deleted_checkout = response.json::<DeletedCheckout>().await?;
+            Ok(deleted_checkout)
+        } else {
+            self.handle_error(response).await
+        }
     }
 
     /// Get payment methods available for the given merchant to use with a checkout.
+    ///
+    /// # Arguments
+    /// * `merchant_code` - Unique identifying code of the merchant profile.
+    /// * `amount` - Amount of the payment.
+    /// * `currency` - Three-letter ISO4217 code of the currency.
     pub async fn get_available_payment_methods(
         &self,
         merchant_code: &str,
         amount: Option<f64>,
-        currency: Option<&str>
+        currency: Option<&str>,
     ) -> Result<AvailablePaymentMethodsResponse> {
-        // TODO: Implement the actual HTTP request logic for GET /v0.1/merchants/{merchant_code}/payment-methods
-        unimplemented!();
+        let mut url = self.build_url(&format!("/v0.1/merchants/{}/payment-methods", merchant_code))?;
+        
+        {
+            let mut query_pairs = url.query_pairs_mut();
+            if let Some(amt) = amount {
+                query_pairs.append_pair("amount", &amt.to_string());
+            }
+            if let Some(curr) = currency {
+                query_pairs.append_pair("currency", curr);
+            }
+        }
+
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+
+        if response.status().is_success() {
+            let methods = response.json::<AvailablePaymentMethodsResponse>().await?;
+            Ok(methods)
+        } else {
+            self.handle_error(response).await
+        }
     }
 }
 

@@ -106,6 +106,13 @@ impl SumUpClient {
         Ok(self.base_url.join(path)?)
     }
 
+    /// Helper function to handle API error responses.
+    pub(crate) async fn handle_error<T>(&self, response: reqwest::Response) -> Result<T> {
+        let status = response.status().as_u16();
+        let message = response.text().await.unwrap_or_default();
+        Err(Error::ApiError { status, message })
+    }
+
     /// Get the current API key being used by the client.
     pub fn api_key(&self) -> &str {
         &self.api_key
