@@ -32,6 +32,14 @@
 - ✅ **Error Handling**: Proper HTTP status code handling and error responses
 - ✅ **Path Parameters**: Correct URL construction with customer IDs
 
+### 3. **Merchant API (`src/merchant.rs`)**
+- ✅ `get_merchant_profile()` - Retrieves the authenticated merchant's profile
+- ✅ `get_merchant()` - Retrieves a specific merchant's profile by merchant code
+- ✅ `list_merchants()` - Lists all merchants accessible to the authenticated user
+- ✅ **Error Handling**: Proper HTTP status code handling and error responses
+- ✅ **Path Parameters**: Correct URL construction with merchant codes
+- ✅ **Testing**: Comprehensive wiremock tests for all endpoints
+
 ### 3. **Transaction API (`src/transactions.rs`)**
 - ✅ `list_transactions_history()` - Modern v2.1 endpoint with complex query parameters
 - ✅ **Query Parameters**: Support for `limit`, `order`, `newest_time` parameters
@@ -56,7 +64,6 @@
 
 ### 1. **Complete API Implementation**
 - 🔄 **Checkout API**: Implement `create_checkout()`, `process_checkout()`, `retrieve_checkout()`, `delete_checkout()`
-- 🔄 **Merchant API**: Implement merchant profile retrieval
 - 🔄 **Payout API**: Implement payout listing and retrieval
 - 🔄 **Receipt API**: Implement receipt listing and retrieval
 - 🔄 **Reader API**: Implement reader management

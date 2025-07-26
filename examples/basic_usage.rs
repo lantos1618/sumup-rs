@@ -31,10 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         customer_id: "cust_12345".to_string(),
         personal_details: Some(personal_details) 
     };
-    // Note: This will panic with unimplemented!() until the HTTP logic is implemented
-    // let customer = client.create_customer(&customer_request).await?;
-    // println!("Created customer: {:?}", customer);
-    println!("Customer creation would be implemented here");
+    let customer = client.create_customer(&customer_request).await?;
+    println!("Created customer: {:?}", customer);
     
     // Example 2: Create a checkout
     println!("\n2. Creating a checkout...");
@@ -57,21 +55,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Example 3: List transactions
     println!("\n3. Listing transactions...");
-    // Note: This will panic with unimplemented!() until the HTTP logic is implemented
-    // let transactions = client.list_transactions().await?;
-    // println!("Found {} transactions", transactions.transactions.len());
-    println!("Transaction listing would be implemented here");
+    let transactions = client.list_transactions_history("your-merchant-code", Some(10), Some("desc"), None).await?;
+    println!("Found {} transactions", transactions.items.len());
     
     // Example 4: Get merchant profile
     println!("\n4. Getting merchant profile...");
-    // Note: This will panic with unimplemented!() until the HTTP logic is implemented
-    // let profile = client.get_merchant_profile().await?;
-    // println!("Merchant profile: {:?}", profile);
-    println!("Merchant profile retrieval would be implemented here");
+    let profile = client.get_merchant_profile().await?;
+    println!("Merchant profile: {:?}", profile);
     
     println!("\nExample completed successfully!");
-    println!("Note: All API calls are currently unimplemented and would panic.");
-    println!("To see actual functionality, implement the HTTP logic in each module.");
+    println!("Note: Customer, Transaction, and Merchant APIs are now fully implemented.");
+    println!("Checkout API is still in progress.");
     
     Ok(())
 } 

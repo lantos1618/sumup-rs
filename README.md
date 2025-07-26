@@ -202,14 +202,30 @@ let customer = client.create_customer(&request).await?;
 
 ## Development Status
 
-This is currently a **scaffold/blueprint** project. All function signatures and data models are defined, but the actual HTTP request implementations are marked with `unimplemented!()`. 
+This project is actively being developed with a solid foundation and several completed modules.
 
-### Next Steps
+### ✅ **Completed Implementations**
 
-1. **Implement HTTP Logic**: Replace `unimplemented!()` calls with actual HTTP request implementations
-2. **Add Tests**: Create comprehensive test suite with mocked responses
-3. **Add Examples**: Create more detailed usage examples
-4. **Add Documentation**: Generate and publish API documentation
+- **Data Models**: Complete modular model structure with proper serialization
+- **Customer API**: Full CRUD operations with comprehensive testing
+- **Transaction API**: List transactions with query parameters and pagination
+- **Merchant API**: Retrieve merchant profiles and list accessible merchants
+- **Testing Infrastructure**: Wiremock-based testing with comprehensive test coverage
+
+### 🔄 **In Progress**
+
+- **Checkout API**: Models defined, implementation in progress
+- **Payout API**: Models defined, implementation in progress
+- **Receipt API**: Models defined, implementation in progress
+- **Reader API**: Models defined, implementation in progress
+- **Membership/Member/Role APIs**: Models defined, implementation in progress
+
+### 📋 **Next Steps**
+
+1. **Complete Core APIs**: Implement remaining HTTP logic for checkouts, payouts, receipts, and readers
+2. **Add Integration Tests**: Expand test coverage for all implemented endpoints
+3. **Update Examples**: Add working examples for all completed APIs
+4. **Enhance Error Handling**: Add more specific error types for better user experience
 5. **Add CI/CD**: Set up continuous integration and deployment
 
 ## Contributing
