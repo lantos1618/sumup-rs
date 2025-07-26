@@ -16,16 +16,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         email: Some("john.doe@example.com".to_string()),
         phone: Some("+1234567890".to_string()),
         birth_date: Some("1990-01-01".to_string()),
+        tax_id: Some("123456789".to_string()),
         address: Some(Address {
             city: Some("New York".to_string()),
             country: Some("US".to_string()),
             line_1: Some("123 Main St".to_string()),
+            line_2: Some("Apt 4B".to_string()),
             postal_code: Some("10001".to_string()),
             state: Some("NY".to_string()),
         }),
     };
     
-    let customer_request = CreateCustomerRequest { personal_details };
+    let customer_request = CreateCustomerRequest { 
+        customer_id: "cust_12345".to_string(),
+        personal_details: Some(personal_details) 
+    };
     // Note: This will panic with unimplemented!() until the HTTP logic is implemented
     // let customer = client.create_customer(&customer_request).await?;
     // println!("Created customer: {:?}", customer);

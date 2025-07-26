@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, CreateCheckoutRequest};
+use sumup_rs::{SumUpClient, CreateCheckoutRequest, ProcessCheckoutRequest, CardDetails};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -71,7 +71,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             
             // Example of processing a checkout (commented out as it requires real payment details)
-            /*
             let process_request = ProcessCheckoutRequest {
                 payment_type: "card".to_string(),
                 installments: None,
@@ -84,6 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }),
                 token: None,
                 customer_id: None,
+                personal_details: None,
             };
             
             match client.process_checkout(&checkout.id, &process_request).await {
@@ -95,7 +95,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("❌ Failed to process checkout: {}", e);
                 }
             }
-            */
             
             // Deactivate the checkout
             println!("\nDeactivating checkout...");

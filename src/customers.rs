@@ -1,66 +1,107 @@
 use crate::{SumUpClient, Result, Customer, CreateCustomerRequest, UpdateCustomerRequest, PaymentInstrument};
 
 impl SumUpClient {
-    /// Lists all customers for the authenticated merchant.
-    pub async fn list_customers(&self) -> Result<Vec<Customer>> {
-        // TODO: Implement the actual HTTP request logic
-        // 1. Build URL for GET /v0.1/customers
-        // 2. Make GET request with Authorization header
-        // 3. Deserialize response
-        unimplemented!();
-    }
-
-    /// Creates a new customer resource.
+    /// Creates a new saved customer resource.
+    ///
+    /// # Arguments
+    /// * `body` - The request body containing the customer_id and personal details.
     pub async fn create_customer(&self, body: &CreateCustomerRequest) -> Result<Customer> {
-        // TODO: Implement the actual HTTP request logic
-        // 1. Build URL for POST /v0.1/customers
-        // 2. Make POST request with Authorization header and JSON body
-        // 3. Deserialize response
-        unimplemented!();
+        let url = self.build_url("/v0.1/customers")?;
+
+        let response = self
+            .http_client
+            .post(url)
+            .bearer_auth(&self.api_key)
+            .json(body)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let customer = response.json::<Customer>().await?;
+            Ok(customer)
+        } else {
+            self.handle_error(response).await
+        }
     }
 
-    /// Retrieves an identified customer resource.
+    /// Retrieves an identified saved customer resource.
+    ///
+    /// # Arguments
+    /// * `customer_id` - The unique ID of the customer.
     pub async fn retrieve_customer(&self, customer_id: &str) -> Result<Customer> {
-        // TODO: Implement the actual HTTP request logic
-        // 1. Build URL with path parameter: /v0.1/customers/{customer_id}
-        // 2. Make GET request
-        // 3. Deserialize response
-        unimplemented!();
+        let url = self.build_url(&format!("/v0.1/customers/{}", customer_id))?;
+
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+
+        if response.status().is_success() {
+            let customer = response.json::<Customer>().await?;
+            Ok(customer)
+        } else {
+            self.handle_error(response).await
+        }
     }
 
-    /// Updates an identified customer resource.
+    /// Updates an identified saved customer resource's personal details.
+    ///
+    /// # Arguments
+    /// * `customer_id` - The unique ID of the customer.
+    /// * `body` - The customer details to update.
     pub async fn update_customer(&self, customer_id: &str, body: &UpdateCustomerRequest) -> Result<Customer> {
-        // TODO: Implement the actual HTTP request logic for PUT /v0.1/customers/{customer_id}
-        unimplemented!();
+        let url = self.build_url(&format!("/v0.1/customers/{}", customer_id))?;
+
+        let response = self
+            .http_client
+            .put(url)
+            .bearer_auth(&self.api_key)
+            .json(body)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let customer = response.json::<Customer>().await?;
+            Ok(customer)
+        } else {
+            self.handle_error(response).await
+        }
     }
 
-    /// Deletes an identified customer resource.
-    pub async fn delete_customer(&self, customer_id: &str) -> Result<()> {
-        // TODO: Implement the actual HTTP request logic for DELETE /v0.1/customers/{customer_id}
-        unimplemented!();
-    }
-
-    /// Lists payment instruments for a customer.
+    /// Lists all payment instrument resources that are saved for an identified customer.
+    ///
+    /// # Arguments
+    /// * `customer_id` - The unique ID of the customer.
     pub async fn list_customer_payment_instruments(&self, customer_id: &str) -> Result<Vec<PaymentInstrument>> {
-        // TODO: Implement the actual HTTP request logic for GET /v0.1/customers/{customer_id}/payment-instruments
-        unimplemented!();
+        let url = self.build_url(&format!("/v0.1/customers/{}/payment-instruments", customer_id))?;
+
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+
+        if response.status().is_success() {
+            let instruments = response.json::<Vec<PaymentInstrument>>().await?;
+            Ok(instruments)
+        } else {
+            self.handle_error(response).await
+        }
     }
 
-    /// Creates a payment instrument for a customer.
-    pub async fn create_customer_payment_instrument(&self, customer_id: &str, body: &serde_json::Value) -> Result<PaymentInstrument> {
-        // TODO: Implement the actual HTTP request logic for POST /v0.1/customers/{customer_id}/payment-instruments
-        unimplemented!();
-    }
+    /// Deactivates an identified card payment instrument resource for a customer.
+    /// A successful deactivation returns a 204 No Content response.
+    ///
+    /// # Arguments
+    /// * `customer_id` - The unique ID of the customer.
+    /// * `token` - The token of the payment instrument to deactivate.
+    pub async fn deactivate_customer_payment_instrument(&self, customer_id: &str, token: &str) -> Result<()> {
+        let url = self.build_url(&format!("/v0.1/customers/{}/payment-instruments/{}", customer_id, token))?;
 
-    /// Retrieves a payment instrument for a customer.
-    pub async fn retrieve_customer_payment_instrument(&self, customer_id: &str, token: &str) -> Result<PaymentInstrument> {
-        // TODO: Implement the actual HTTP request logic for GET /v0.1/customers/{customer_id}/payment-instruments/{token}
-        unimplemented!();
-    }
+        let response = self
+            .http_client
+            .delete(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
-    /// Deletes a payment instrument for a customer.
-    pub async fn delete_customer_payment_instrument(&self, customer_id: &str, token: &str) -> Result<()> {
-        // TODO: Implement the actual HTTP request logic for DELETE /v0.1/customers/{customer_id}/payment-instruments/{token}
-        unimplemented!();
+        if response.status().is_success() {
+            Ok(()) // Successful deletion often returns 204 No Content
+        } else {
+            self.handle_error(response).await
+        }
     }
 } 
