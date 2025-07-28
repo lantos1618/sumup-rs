@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, Member, Role, Membership, CreateMemberRequest, CreateRoleRequest, CreateMembershipRequest, UpdateMemberRequest, UpdateRoleRequest, UpdateMembershipRequest};
+use sumup_rs::{SumUpClient, Member, Role, Membership, CreateMemberRequest, CreateRoleRequest, CreateMembershipRequest, CreateReaderCheckoutRequest, TotalAmount};
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path};
 
@@ -72,7 +72,7 @@ async fn test_create_role_success() {
     });
 
     Mock::given(method("POST"))
-        .and(path("/v0.1/me/memberships/membership_123/roles"))
+        .and(path("/v0.1/memberships/membership_123/roles"))
         .respond_with(ResponseTemplate::new(201).set_body_json(&response_body))
         .mount(&mock_server)
         .await;
@@ -220,65 +220,60 @@ async fn test_create_reader_checkout_success() {
     let mock_server = MockServer::start().await;
     let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
-    let expected_checkout = sumup_rs::Checkout {
+    let expected_checkout = sumup_rs::ReaderCheckoutResponse {
         id: "checkout_123".to_string(),
         status: "PENDING".to_string(),
-        amount: 29.99,
-        currency: "EUR".to_string(),
-        date: chrono::Utc::now(),
-        checkout_reference: Some("order-123".to_string()),
-        merchant_code: Some("merchant_123".to_string()),
-        description: Some("Coffee and pastry".to_string()),
-        return_url: Some("https://example.com/return".to_string()),
-        valid_until: None,
+        total_amount: TotalAmount {
+            value: 29.99,
+            currency: "EUR".to_string(),
+            minor_unit: 2,
+        },
+        description: "Coffee and pastry".to_string(),
+        return_url: "https://example.com/return".to_string(),
+        installments: None,
         customer_id: None,
-        mandate: None,
-        transactions: vec![],
-        transaction_code: None,
+        external_reference: Some("order-123".to_string()),
         transaction_id: None,
-        merchant_name: None,
-        redirect_url: None,
-        payment_instrument: None,
+        created_at: chrono::Utc::now(),
+        completed_at: None,
     };
 
     let response_body = serde_json::json!({
         "id": "checkout_123",
         "status": "PENDING",
-        "amount": 29.99,
-        "currency": "EUR",
-        "date": expected_checkout.date.to_rfc3339(),
-        "checkout_reference": "order-123",
-        "merchant_code": "merchant_123",
+        "total_amount": {
+            "value": 29.99,
+            "currency": "EUR",
+            "minor_unit": 2
+        },
         "description": "Coffee and pastry",
         "return_url": "https://example.com/return",
-        "valid_until": null,
+        "installments": null,
         "customer_id": null,
-        "mandate": null,
-        "transactions": [],
-        "transaction_code": null,
+        "external_reference": "order-123",
         "transaction_id": null,
-        "merchant_name": null,
-        "redirect_url": null,
-        "payment_instrument": null
+        "created_at": expected_checkout.created_at.to_rfc3339(),
+        "completed_at": null
     });
 
     Mock::given(method("POST"))
-        .and(path("/v0.1/me/readers/reader_123/checkouts"))
+        .and(path("/v0.1/me/readers/reader_123/checkout"))
         .respond_with(ResponseTemplate::new(201).set_body_json(&response_body))
         .mount(&mock_server)
         .await;
 
     // Act
-    let request = sumup_rs::CreateCheckoutRequest {
-        checkout_reference: "order-123".to_string(),
-        amount: 29.99,
-        currency: "EUR".to_string(),
-        merchant_code: "merchant_123".to_string(),
-        description: Some("Coffee and pastry".to_string()),
-        return_url: Some("https://example.com/return".to_string()),
+    let request = CreateReaderCheckoutRequest {
+        total_amount: TotalAmount {
+            value: 29.99,
+            currency: "EUR".to_string(),
+            minor_unit: 2,
+        },
+        description: "Coffee and pastry".to_string(),
+        return_url: "https://example.com/return".to_string(),
+        installments: None,
         customer_id: None,
-        purpose: None,
-        redirect_url: None,
+        external_reference: Some("order-123".to_string()),
     };
     let result = client.create_reader_checkout("reader_123", &request).await;
 
@@ -286,8 +281,8 @@ async fn test_create_reader_checkout_success() {
     assert!(result.is_ok());
     let checkout = result.unwrap();
     assert_eq!(checkout.id, "checkout_123");
-    assert_eq!(checkout.checkout_reference, Some("order-123".to_string()));
-    assert_eq!(checkout.amount, 29.99);
-    assert_eq!(checkout.currency, "EUR");
+    assert_eq!(checkout.external_reference, Some("order-123".to_string()));
+    assert_eq!(checkout.total_amount.value, 29.99);
+    assert_eq!(checkout.total_amount.currency, "EUR");
     assert_eq!(checkout.status, "PENDING");
 } 

@@ -1,20 +1,4 @@
-use crate::{SumUpClient, Result, Reader, ReaderListResponse, Checkout, CreateCheckoutRequest};
-use serde::Serialize;
-
-#[derive(Debug, Clone, Serialize)]
-pub struct CreateReaderRequest {
-    pub serial_number: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct UpdateReaderRequest {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-}
+use crate::{SumUpClient, Result, Reader, ReaderListResponse, CreateReaderRequest, UpdateReaderRequest, CreateReaderCheckoutRequest, ReaderCheckoutResponse};
 
 impl SumUpClient {
     /// Lists all readers for the authenticated merchant.
@@ -237,8 +221,8 @@ impl SumUpClient {
     /// # Arguments
     /// * `reader_id` - The unique reader identifier
     /// * `body` - The checkout request details
-    pub async fn create_reader_checkout(&self, reader_id: &str, body: &CreateCheckoutRequest) -> Result<Checkout> {
-        let url = self.build_url(&format!("/v0.1/me/readers/{}/checkouts", reader_id))?;
+    pub async fn create_reader_checkout(&self, reader_id: &str, body: &CreateReaderCheckoutRequest) -> Result<ReaderCheckoutResponse> {
+        let url = self.build_url(&format!("/v0.1/me/readers/{}/checkout", reader_id))?;
 
         let response = self
             .http_client
@@ -249,7 +233,7 @@ impl SumUpClient {
             .await?;
 
         if response.status().is_success() {
-            let checkout = response.json::<Checkout>().await?;
+            let checkout = response.json::<ReaderCheckoutResponse>().await?;
             Ok(checkout)
         } else {
             self.handle_error(response).await
@@ -262,8 +246,8 @@ impl SumUpClient {
     /// * `merchant_code` - The unique merchant code identifier
     /// * `reader_id` - The unique reader identifier
     /// * `body` - The checkout request details
-    pub async fn create_merchant_reader_checkout(&self, merchant_code: &str, reader_id: &str, body: &CreateCheckoutRequest) -> Result<Checkout> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/readers/{}/checkouts", merchant_code, reader_id))?;
+    pub async fn create_merchant_reader_checkout(&self, merchant_code: &str, reader_id: &str, body: &CreateReaderCheckoutRequest) -> Result<ReaderCheckoutResponse> {
+        let url = self.build_url(&format!("/v0.1/merchants/{}/readers/{}/checkout", merchant_code, reader_id))?;
 
         let response = self
             .http_client
@@ -274,8 +258,53 @@ impl SumUpClient {
             .await?;
 
         if response.status().is_success() {
-            let checkout = response.json::<Checkout>().await?;
+            let checkout = response.json::<ReaderCheckoutResponse>().await?;
             Ok(checkout)
+        } else {
+            self.handle_error(response).await
+        }
+    }
+
+    /// Terminates a reader checkout.
+    ///
+    /// # Arguments
+    /// * `reader_id` - The unique reader identifier
+    /// * `checkout_id` - The unique checkout identifier
+    pub async fn terminate_reader_checkout(&self, reader_id: &str, checkout_id: &str) -> Result<()> {
+        let url = self.build_url(&format!("/v0.1/me/readers/{}/checkout/{}", reader_id, checkout_id))?;
+
+        let response = self
+            .http_client
+            .delete(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            self.handle_error(response).await
+        }
+    }
+
+    /// Terminates a reader checkout for a specific merchant.
+    ///
+    /// # Arguments
+    /// * `merchant_code` - The unique merchant code identifier
+    /// * `reader_id` - The unique reader identifier
+    /// * `checkout_id` - The unique checkout identifier
+    pub async fn terminate_merchant_reader_checkout(&self, merchant_code: &str, reader_id: &str, checkout_id: &str) -> Result<()> {
+        let url = self.build_url(&format!("/v0.1/merchants/{}/readers/{}/checkout/{}", merchant_code, reader_id, checkout_id))?;
+
+        let response = self
+            .http_client
+            .delete(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            Ok(())
         } else {
             self.handle_error(response).await
         }

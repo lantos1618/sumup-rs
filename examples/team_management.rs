@@ -3,16 +3,21 @@ use sumup_rs::{
     CreateMembershipRequest, 
     CreateRoleRequest, 
     CreateMemberRequest,
-    CreateCheckoutRequest
+    CreateReaderCheckoutRequest,
+    TotalAmount
 };
 use sumup_rs::payouts::PayoutListQuery;
-use sumup_rs::receipts::{ReceiptListQuery, ReceiptRetrieveQuery};
-use sumup_rs::readers::CreateReaderRequest;
+use sumup_rs::receipts::ReceiptRetrieveQuery;
+use sumup_rs::CreateReaderRequest;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Get API key from environment variable
+    let api_key = std::env::var("SUMUP_API_KEY")
+        .expect("Please set SUMUP_API_KEY environment variable");
+    
     // Create a client (use sandbox for testing)
-    let client = SumUpClient::new("your-api-key".to_string(), true)?;
+    let client = SumUpClient::new(api_key, true)?;
     
     println!("=== SumUp Team Management Example ===\n");
     
@@ -122,24 +127,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             
             // Step 8: Create a checkout for the reader (in-person payment)
             println!("\n8. Creating a reader checkout...");
-            let checkout_request = CreateCheckoutRequest {
-                checkout_reference: "counter-sale-001".to_string(),
-                amount: 15.99,
-                currency: "EUR".to_string(),
-                merchant_code: "your-merchant-code".to_string(),
-                description: Some("Coffee and pastry".to_string()),
-                return_url: Some("https://mybusiness.com/return".to_string()),
+            let checkout_request = CreateReaderCheckoutRequest {
+                total_amount: TotalAmount {
+                    value: 15.99,
+                    currency: "EUR".to_string(),
+                    minor_unit: 2,
+                },
+                description: "Coffee and pastry".to_string(),
+                return_url: "https://mybusiness.com/return".to_string(),
+                installments: None,
                 customer_id: None,
-                purpose: None,
-                redirect_url: None,
+                external_reference: Some("counter-sale-001".to_string()),
             };
             
             match client.create_reader_checkout(&reader.id, &checkout_request).await {
                 Ok(checkout) => {
                     println!("✅ Created reader checkout: {} (ID: {})", 
-                        checkout.checkout_reference.as_deref().unwrap_or("N/A"), 
+                        checkout.external_reference.as_deref().unwrap_or("N/A"), 
                         checkout.id);
-                    println!("   Amount: {} {}", checkout.amount, checkout.currency);
+                    println!("   Amount: {} {}", checkout.total_amount.value, checkout.total_amount.currency);
                     println!("   Status: {}", checkout.status);
                 }
                 Err(e) => {

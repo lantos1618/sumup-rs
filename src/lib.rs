@@ -23,8 +23,24 @@ pub enum Error {
     Http(reqwest::Error),
     Json(serde_json::Error),
     Url(url::ParseError),
-    // You can add more specific API errors here
-    ApiError { status: u16, message: String },
+    // Structured API error with parsed response body
+    ApiError { status: u16, body: ApiErrorBody },
+}
+
+/// Structured representation of SumUp API error responses
+#[derive(Debug, serde::Deserialize)]
+pub struct ApiErrorBody {
+    #[serde(rename = "type")]
+    pub error_type: Option<String>,
+    pub title: Option<String>,
+    pub status: Option<u16>,
+    pub detail: Option<String>,
+    pub error_code: Option<String>,
+    pub message: Option<String>,
+    pub param: Option<String>,
+    // Sometimes the API returns additional context
+    #[serde(flatten)]
+    pub additional_fields: std::collections::HashMap<String, serde_json::Value>,
 }
 
 impl From<reqwest::Error> for Error {
@@ -51,7 +67,15 @@ impl std::fmt::Display for Error {
             Error::Http(e) => write!(f, "HTTP error: {}", e),
             Error::Json(e) => write!(f, "JSON error: {}", e),
             Error::Url(e) => write!(f, "URL error: {}", e),
-            Error::ApiError { status, message } => write!(f, "API error {}: {}", status, message),
+            Error::ApiError { status, body } => {
+                // Try to provide the most useful error message
+                let status_str = status.to_string();
+                let message = body.detail.as_ref()
+                    .or(body.message.as_ref())
+                    .or(body.title.as_ref())
+                    .unwrap_or(&status_str);
+                write!(f, "API error {}: {}", status, message)
+            }
         }
     }
 }
@@ -109,8 +133,29 @@ impl SumUpClient {
     /// Helper function to handle API error responses.
     pub(crate) async fn handle_error<T>(&self, response: reqwest::Response) -> Result<T> {
         let status = response.status().as_u16();
-        let message = response.text().await.unwrap_or_default();
-        Err(Error::ApiError { status, message })
+        
+        // Get the response text first
+        let response_text = response.text().await.unwrap_or_default();
+        
+        // Try to parse the error response as structured JSON
+        let body = match serde_json::from_str::<ApiErrorBody>(&response_text) {
+            Ok(parsed_body) => parsed_body,
+            Err(_) => {
+                // Fall back to plain text if JSON parsing fails
+                ApiErrorBody {
+                    error_type: None,
+                    title: None,
+                    status: Some(status),
+                    detail: Some(response_text),
+                    error_code: None,
+                    message: None,
+                    param: None,
+                    additional_fields: std::collections::HashMap::new(),
+                }
+            }
+        };
+        
+        Err(Error::ApiError { status, body })
     }
 
     /// Get the current API key being used by the client.

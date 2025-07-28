@@ -6,7 +6,7 @@ impl SumUpClient {
     /// # Arguments
     /// * `membership_id` - The unique membership identifier
     pub async fn list_roles(&self, membership_id: &str) -> Result<RoleListResponse> {
-        let url = self.build_url(&format!("/v0.1/me/memberships/{}/roles", membership_id))?;
+        let url = self.build_url(&format!("/v0.1/memberships/{}/roles", membership_id))?;
 
         let response = self
             .http_client
@@ -52,7 +52,7 @@ impl SumUpClient {
     /// * `membership_id` - The unique membership identifier
     /// * `body` - The role details to create
     pub async fn create_role(&self, membership_id: &str, body: &CreateRoleRequest) -> Result<Role> {
-        let url = self.build_url(&format!("/v0.1/me/memberships/{}/roles", membership_id))?;
+        let url = self.build_url(&format!("/v0.1/memberships/{}/roles", membership_id))?;
 
         let response = self
             .http_client
@@ -101,7 +101,7 @@ impl SumUpClient {
     /// * `membership_id` - The unique membership identifier
     /// * `role_id` - The unique role identifier
     pub async fn retrieve_role(&self, membership_id: &str, role_id: &str) -> Result<Role> {
-        let url = self.build_url(&format!("/v0.1/me/memberships/{}/roles/{}", membership_id, role_id))?;
+        let url = self.build_url(&format!("/v0.1/memberships/{}/roles/{}", membership_id, role_id))?;
 
         let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
 
@@ -139,7 +139,7 @@ impl SumUpClient {
     /// * `role_id` - The unique role identifier
     /// * `body` - The role details to update
     pub async fn update_role(&self, membership_id: &str, role_id: &str, body: &UpdateRoleRequest) -> Result<Role> {
-        let url = self.build_url(&format!("/v0.1/me/memberships/{}/roles/{}", membership_id, role_id))?;
+        let url = self.build_url(&format!("/v0.1/memberships/{}/roles/{}", membership_id, role_id))?;
 
         let response = self
             .http_client
@@ -189,7 +189,7 @@ impl SumUpClient {
     /// * `membership_id` - The unique membership identifier
     /// * `role_id` - The unique role identifier
     pub async fn delete_role(&self, membership_id: &str, role_id: &str) -> Result<()> {
-        let url = self.build_url(&format!("/v0.1/me/memberships/{}/roles/{}", membership_id, role_id))?;
+        let url = self.build_url(&format!("/v0.1/memberships/{}/roles/{}", membership_id, role_id))?;
 
         let response = self
             .http_client

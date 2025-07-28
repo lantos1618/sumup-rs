@@ -65,4 +65,42 @@ impl SumUpClient {
             self.handle_error(response).await
         }
     }
+
+    /// Refunds a transaction.
+    ///
+    /// # Arguments
+    /// * `merchant_code` - The merchant's unique code.
+    /// * `transaction_id` - The transaction's unique ID.
+    /// * `amount` - The amount to refund (optional, defaults to full amount).
+    /// * `reason` - The reason for the refund.
+    pub async fn refund_transaction(
+        &self,
+        merchant_code: &str,
+        transaction_id: &str,
+        amount: Option<f64>,
+        reason: &str,
+    ) -> Result<Transaction> {
+        let url = self.build_url(&format!("/v0.1/merchants/{}/transactions/{}/refunds", merchant_code, transaction_id))?;
+
+        let mut body = serde_json::Map::new();
+        body.insert("reason".to_string(), serde_json::Value::String(reason.to_string()));
+        if let Some(amt) = amount {
+            body.insert("amount".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(amt).unwrap()));
+        }
+
+        let response = self
+            .http_client
+            .post(url)
+            .bearer_auth(&self.api_key)
+            .json(&body)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let transaction = response.json::<Transaction>().await?;
+            Ok(transaction)
+        } else {
+            self.handle_error(response).await
+        }
+    }
 } 

@@ -196,9 +196,9 @@ async fn test_get_merchant_profile_error() {
     assert!(result.is_err());
     let error = result.unwrap_err();
     match error {
-        sumup_rs::Error::ApiError { status, message } => {
+        sumup_rs::Error::ApiError { status, body } => {
             assert_eq!(status, 401);
-            assert!(message.contains("unauthorized"));
+            assert!(body.error_code.as_ref().unwrap() == "unauthorized");
         }
         _ => panic!("Expected ApiError, got {:?}", error),
     }
@@ -228,9 +228,9 @@ async fn test_get_merchant_not_found() {
     assert!(result.is_err());
     let error = result.unwrap_err();
     match error {
-        sumup_rs::Error::ApiError { status, message } => {
+        sumup_rs::Error::ApiError { status, body } => {
             assert_eq!(status, 404);
-            assert!(message.contains("not_found"));
+            assert!(body.error_code.as_ref().unwrap() == "not_found");
         }
         _ => panic!("Expected ApiError, got {:?}", error),
     }

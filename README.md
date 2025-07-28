@@ -27,8 +27,12 @@ use sumup_rs::{SumUpClient, CreateCheckoutRequest};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Get API key from environment variable
+    let api_key = std::env::var("SUMUP_API_KEY")
+        .expect("Please set SUMUP_API_KEY environment variable");
+    
     // Create a client (use sandbox for testing)
-    let client = SumUpClient::new("your-api-key".to_string(), true)?;
+    let client = SumUpClient::new(api_key, true)?;
     
     // Create a checkout
     let checkout_request = CreateCheckoutRequest {
