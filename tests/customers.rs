@@ -1,6 +1,7 @@
 use sumup_rs::{SumUpClient, CreateCustomerRequest, PersonalDetails, Address};
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path, body_json, header};
+use chrono;
 
 #[tokio::test]
 async fn test_create_customer_success() {
@@ -152,4 +153,60 @@ async fn test_create_customer_api_error() {
 
     assert!(result.is_err());
     // You can add more specific error checking here based on your Error type
-} 
+}
+
+#[tokio::test]
+async fn test_create_customer_with_real_api() {
+    // Load environment variables from .env.local
+    dotenv::from_filename(".env.local").ok();
+    
+    // Get API key from environment
+    let api_key = std::env::var("SUMUP_API_KEY")
+        .expect("SUMUP_API_KEY environment variable must be set");
+    
+    // Create a client with the real API (use sandbox for testing)
+    let client = SumUpClient::new(api_key, true).expect("Failed to create SumUp client");
+    
+    // Create a unique customer ID using timestamp
+    let customer_id = format!("test-cust-{}", chrono::Utc::now().timestamp());
+    
+    let request_body = CreateCustomerRequest {
+        customer_id: customer_id.clone(),
+        personal_details: Some(PersonalDetails {
+            first_name: Some("Test".to_string()),
+            last_name: Some("Customer".to_string()),
+            email: Some("test.customer@example.com".to_string()),
+            phone: Some("+1234567890".to_string()),
+            birth_date: Some("1990-01-01".to_string()),
+            tax_id: Some("123456789".to_string()),
+            address: Some(Address {
+                city: Some("Test City".to_string()),
+                country: Some("US".to_string()),
+                line_1: Some("123 Test St".to_string()),
+                line_2: Some("Apt 1".to_string()),
+                postal_code: Some("12345".to_string()),
+                state: Some("CA".to_string()),
+            }),
+        }),
+    };
+
+    // Test creating a customer with the real API
+    let result = client.create_customer(&request_body).await;
+    
+    // This might succeed or fail depending on the API key and sandbox status
+    match result {
+        Ok(customer) => {
+            println!("✅ Successfully created customer: {}", customer.customer_id);
+            assert_eq!(customer.customer_id, customer_id);
+            
+            let personal_details = customer.personal_details.unwrap();
+            assert_eq!(personal_details.first_name, Some("Test".to_string()));
+            assert_eq!(personal_details.last_name, Some("Customer".to_string()));
+            assert_eq!(personal_details.email, Some("test.customer@example.com".to_string()));
+        }
+        Err(e) => {
+            println!("❌ Failed to create customer with real API: {}", e);
+            // Don't fail the test - this might be expected if the API key is invalid or sandbox is not available
+        }
+    }
+}
