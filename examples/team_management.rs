@@ -160,7 +160,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Step 9: Demonstrate receipt retrieval
     println!("\n9. Retrieving receipt details...");
-    let receipt_query = ReceiptRetrieveQuery {
+    let _receipt_query = ReceiptRetrieveQuery {
         mid: "your-merchant-id".to_string(),
     };
     

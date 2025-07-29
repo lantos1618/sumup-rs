@@ -1,16 +1,93 @@
-use crate::{SumUpClient, Result, CreateCheckoutRequest, Checkout, ProcessCheckoutRequest, DeletedCheckout, AvailablePaymentMethodsResponse};
+use crate::{SumUpClient, Result, CreateCheckoutRequest, Checkout, ProcessCheckoutRequest, DeletedCheckout, AvailablePaymentMethodsResponse, CheckoutListQuery};
 
 impl SumUpClient {
     /// Lists created checkout resources according to the applied checkout_reference.
     ///
     /// # Arguments
     /// * `checkout_reference` - Unique ID of the payment checkout specified by the client application.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use sumup_rs::SumUpClient;
+    ///
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
+    /// 
+    /// // List all checkouts
+    /// let checkouts = client.list_checkouts(None).await?;
+    /// println!("Found {} checkouts", checkouts.len());
+    /// 
+    /// // List checkouts with specific reference
+    /// let checkouts = client.list_checkouts(Some("order-123")).await?;
+    /// println!("Found {} checkouts with reference 'order-123'", checkouts.len());
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn list_checkouts(&self, checkout_reference: Option<&str>) -> Result<Vec<Checkout>> {
+        let query = CheckoutListQuery {
+            checkout_reference: checkout_reference.map(|s| s.to_string()),
+            status: None,
+            merchant_code: None,
+            customer_id: None,
+            limit: None,
+            offset: None,
+        };
+        self.list_checkouts_with_query(&query).await
+    }
+
+    /// Lists created checkout resources with advanced query parameters.
+    ///
+    /// # Arguments
+    /// * `query` - Query parameters for filtering and pagination
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use sumup_rs::{SumUpClient, CheckoutListQuery};
+    ///
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
+    /// 
+    /// // Create a query to filter checkouts
+    /// let query = CheckoutListQuery {
+    ///     checkout_reference: Some("order-123".to_string()),
+    ///     status: Some("PAID".to_string()),
+    ///     merchant_code: Some("merchant123".to_string()),
+    ///     customer_id: Some("customer456".to_string()),
+    ///     limit: Some(10),
+    ///     offset: Some(0),
+    /// };
+    /// 
+    /// let checkouts = client.list_checkouts_with_query(&query).await?;
+    /// println!("Found {} checkouts matching criteria", checkouts.len());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn list_checkouts_with_query(&self, query: &CheckoutListQuery) -> Result<Vec<Checkout>> {
         let mut url = self.build_url("/v0.1/checkouts")?;
 
-        if let Some(ref_code) = checkout_reference {
-            url.query_pairs_mut()
-                .append_pair("checkout_reference", ref_code);
+        // Add query parameters
+        {
+            let mut query_pairs = url.query_pairs_mut();
+            if let Some(ref checkout_ref) = query.checkout_reference {
+                query_pairs.append_pair("checkout_reference", checkout_ref);
+            }
+            if let Some(ref status) = query.status {
+                query_pairs.append_pair("status", status);
+            }
+            if let Some(ref merchant_code) = query.merchant_code {
+                query_pairs.append_pair("merchant_code", merchant_code);
+            }
+            if let Some(ref customer_id) = query.customer_id {
+                query_pairs.append_pair("customer_id", customer_id);
+            }
+            if let Some(limit) = query.limit {
+                query_pairs.append_pair("limit", &limit.to_string());
+            }
+            if let Some(offset) = query.offset {
+                query_pairs.append_pair("offset", &offset.to_string());
+            }
         }
 
         let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
@@ -113,12 +190,12 @@ impl SumUpClient {
         }
     }
 
-    /// Get payment methods available for the given merchant to use with a checkout.
+    /// Gets available payment methods for a merchant.
     ///
     /// # Arguments
-    /// * `merchant_code` - Unique identifying code of the merchant profile.
-    /// * `amount` - Amount of the payment.
-    /// * `currency` - Three-letter ISO4217 code of the currency.
+    /// * `merchant_code` - The merchant's unique code.
+    /// * `amount` - The transaction amount (optional).
+    /// * `currency` - The transaction currency (optional).
     pub async fn get_available_payment_methods(
         &self,
         merchant_code: &str,
@@ -126,7 +203,7 @@ impl SumUpClient {
         currency: Option<&str>,
     ) -> Result<AvailablePaymentMethodsResponse> {
         let mut url = self.build_url(&format!("/v0.1/merchants/{}/payment-methods", merchant_code))?;
-        
+
         {
             let mut query_pairs = url.query_pairs_mut();
             if let Some(amt) = amount {

@@ -58,6 +58,29 @@ pub struct CreateCheckoutRequest {
     pub redirect_url: Option<String>,
 }
 
+/// Query parameters for listing checkouts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckoutListQuery {
+    /// Unique ID of the payment checkout specified by the client application
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub checkout_reference: Option<String>,
+    /// Filter by checkout status (PENDING, FAILED, PAID)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    /// Filter by merchant code
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub merchant_code: Option<String>,
+    /// Filter by customer ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub customer_id: Option<String>,
+    /// Maximum number of checkouts to return
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<i32>,
+    /// Offset for pagination
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub offset: Option<i32>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessCheckoutRequest {
     pub payment_type: String, // card, boleto, ideal, etc.

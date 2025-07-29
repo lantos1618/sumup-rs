@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, Merchant, MerchantProfile};
+use sumup_rs::{SumUpClient, MerchantProfile};
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path};
 
@@ -8,7 +8,7 @@ async fn test_get_merchant_profile_success() {
     let mock_server = MockServer::start().await;
     let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
-    let expected_profile = MerchantProfile {
+    let _expected_profile = MerchantProfile {
         merchant_code: "merchant_123".to_string(),
         name: "Test Merchant".to_string(),
         email: "merchant@test.com".to_string(),

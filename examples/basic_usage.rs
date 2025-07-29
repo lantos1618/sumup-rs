@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Example 2: Create a checkout
     println!("\n2. Creating a checkout...");
-    let checkout_request = CreateCheckoutRequest {
+    let _checkout_request = CreateCheckoutRequest {
         checkout_reference: "order-123".to_string(),
         amount: 29.99,
         currency: "EUR".to_string(),

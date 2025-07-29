@@ -8,7 +8,7 @@ use sumup_rs::{
 };
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path, body_json, header};
-use dotenv::dotenv;
+
 use chrono;
 
 #[tokio::test]
@@ -121,7 +121,7 @@ async fn test_process_checkout_with_mock_card_success() {
     assert_eq!(processed_checkout.transaction_id, Some("txn-67890".to_string()));
     assert_eq!(processed_checkout.transaction_code, Some("TXN123".to_string()));
     assert!(!processed_checkout.transactions.is_empty());
-    assert_eq!(processed_checkout.transactions[0].status, "SUCCESSFUL");
+    assert_eq!(processed_checkout.transactions[0].status, Some("SUCCESSFUL".to_string()));
 }
 
 #[tokio::test]
