@@ -161,8 +161,8 @@ async fn test_create_customer_with_real_api() {
     dotenv::from_filename(".env.local").ok();
     
     // Get API key from environment
-    let api_key = std::env::var("SUMUP_API_KEY")
-        .expect("SUMUP_API_KEY environment variable must be set");
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
+        .expect("SUMUP_API_SECRET_KEY environment variable must be set");
     
     // Create a client with the real API (use sandbox for testing)
     let client = SumUpClient::new(api_key, true).expect("Failed to create SumUp client");

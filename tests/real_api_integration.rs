@@ -5,10 +5,10 @@ async fn test_real_api_merchant_profile() {
     // Load environment variables from .env.local
     dotenv::from_filename(".env.local").ok();
     
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };
@@ -43,10 +43,10 @@ async fn test_real_api_merchant_profile() {
 async fn test_real_api_create_customer() {
     dotenv::from_filename(".env.local").ok();
     
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };
@@ -98,10 +98,10 @@ async fn test_real_api_create_customer() {
 async fn test_real_api_list_merchants() {
     dotenv::from_filename(".env.local").ok();
     
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };

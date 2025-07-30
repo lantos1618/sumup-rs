@@ -9,8 +9,8 @@ use sumup_rs::{
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the client with your API key
-    let api_key = std::env::var("SUMUP_API_KEY")
-        .expect("SUMUP_API_KEY environment variable must be set");
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
+        .expect("SUMUP_API_SECRET_KEY environment variable must be set");
     
     let client = SumUpClient::new(api_key, false)?;
 

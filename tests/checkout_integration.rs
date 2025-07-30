@@ -3,10 +3,10 @@ use sumup_rs::{SumUpClient, CreateCheckoutRequest};
 #[tokio::test]
 async fn test_create_checkout_integration() {
     // Skip if no API key is available
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };
@@ -48,10 +48,10 @@ async fn test_create_checkout_integration() {
 
 #[tokio::test]
 async fn test_retrieve_checkout_integration() {
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };

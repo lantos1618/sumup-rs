@@ -5,8 +5,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables
     dotenv::from_filename(".env.local").ok();
     
-    let api_key = std::env::var("SUMUP_API_KEY")
-        .expect("SUMUP_API_KEY environment variable must be set");
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
+        .expect("SUMUP_API_SECRET_KEY environment variable must be set");
     
     // Create a client (use sandbox for testing)
     let client = SumUpClient::new(api_key, true)?;
@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Create a checkout request
     let checkout_request = CreateCheckoutRequest {
-        checkout_reference: "order-123".to_string(),
+        checkout_reference: format!("order-{}", chrono::Utc::now().timestamp()),
         amount: 25.50,
         currency: merchant_profile.currency.clone(),
         merchant_code: merchant_profile.merchant_code.clone(),
@@ -53,8 +53,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             
             // List checkouts with the same reference
-            println!("\nListing checkouts with reference 'order-123'...");
-            match client.list_checkouts(Some("order-123")).await {
+            println!("\nListing checkouts with reference '{}'...", checkout_request.checkout_reference);
+            match client.list_checkouts(Some(&checkout_request.checkout_reference)).await {
                 Ok(checkouts) => {
                     println!("✅ Found {} checkout(s)", checkouts.len());
                     for (i, checkout) in checkouts.iter().enumerate() {

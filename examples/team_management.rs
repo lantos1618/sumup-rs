@@ -13,8 +13,8 @@ use sumup_rs::CreateReaderRequest;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get API key from environment variable
-    let api_key = std::env::var("SUMUP_API_KEY")
-        .expect("Please set SUMUP_API_KEY environment variable");
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
+        .expect("Please set SUMUP_API_SECRET_KEY environment variable");
     
     // Create a client (use sandbox for testing)
     let client = SumUpClient::new(api_key, true)?;

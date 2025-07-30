@@ -5,8 +5,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables
     dotenv::from_filename(".env.local").ok();
     
-    let api_key = std::env::var("SUMUP_API_KEY")
-        .expect("SUMUP_API_KEY environment variable must be set");
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
+        .expect("SUMUP_API_SECRET_KEY environment variable must be set");
     
     println!("=== SANDBOX CHECKOUT URL TEST ===");
     println!("Testing sandbox checkout URLs...");

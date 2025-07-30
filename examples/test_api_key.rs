@@ -5,8 +5,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables
     dotenv::from_filename(".env.local").ok();
     
-    let api_key = std::env::var("SUMUP_API_KEY")
-        .expect("SUMUP_API_KEY environment variable must be set");
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
+        .expect("SUMUP_API_SECRET_KEY environment variable must be set");
     
     println!("Testing API key: {}...", &api_key[..10]);
     
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("   Name: {}", profile.name);
             println!("   Country: {}", profile.country);
             println!("   Currency: {}", profile.currency);
-            println!("   Phone: {}", profile.phone);
+            println!("   Phone: {}", profile.phone.as_deref().unwrap_or("Not provided"));
             if let Some(ref dba) = profile.doing_business_as {
                 println!("   Email: {}", dba.email);
             }

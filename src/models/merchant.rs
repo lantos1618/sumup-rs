@@ -32,7 +32,7 @@ pub struct MerchantProfileDetails {
     pub currency: String,
     pub country: String,
     #[serde(rename = "mobile_phone")]
-    pub phone: String,
+    pub phone: Option<String>,
     pub address: Address,
     pub website: Option<String>,
     #[serde(rename = "doing_business_as")]

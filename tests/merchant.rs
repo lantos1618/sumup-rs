@@ -12,7 +12,7 @@ async fn test_get_merchant_profile_success() {
         merchant_profile: MerchantProfileDetails {
             merchant_code: "merchant_123".to_string(),
             name: "Test Merchant".to_string(),
-            phone: "+1234567890".to_string(),
+            phone: Some("+1234567890".to_string()),
             address: sumup_rs::Address {
                 line_1: Some("123 Test St".to_string()),
                 line_2: None,

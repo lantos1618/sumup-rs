@@ -3,10 +3,10 @@ use sumup_rs::SumUpClient;
 #[tokio::test]
 async fn test_merchant_profile_integration() {
     // Skip if no API key is available
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };
@@ -38,10 +38,10 @@ async fn test_merchant_profile_integration() {
 
 #[tokio::test]
 async fn test_list_merchants_integration() {
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };
@@ -67,10 +67,10 @@ async fn test_list_merchants_integration() {
 
 #[tokio::test]
 async fn test_create_customer_integration() {
-    let api_key = match std::env::var("SUMUP_API_KEY") {
+    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_KEY set");
+            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
             return;
         }
     };
