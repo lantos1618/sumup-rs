@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("✅ Merchant profile retrieved successfully!");
             println!("   Merchant Code: {}", profile.merchant_code);
             println!("   Name: {}", profile.name);
-            println!("   Email: {}", profile.email);
+            println!("   Email: {}", profile.doing_business_as.as_ref().map(|dba| &dba.email).unwrap_or(&"No email".to_string()));
             println!("   Country: {}", profile.country);
             println!("   Currency: {}", profile.currency);
         }

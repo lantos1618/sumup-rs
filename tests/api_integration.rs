@@ -24,7 +24,10 @@ async fn test_merchant_profile_integration() {
         Ok(profile) => {
             assert!(!profile.merchant_code.is_empty());
             assert!(!profile.name.is_empty());
-            assert!(!profile.email.is_empty());
+            // Email is now in doing_business_as, so we'll check if it exists
+            if let Some(dba) = &profile.doing_business_as {
+                assert!(!dba.email.is_empty());
+            }
         }
         Err(e) => {
             // Don't fail the test for API errors - this is expected with invalid keys

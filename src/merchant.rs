@@ -1,11 +1,11 @@
-use crate::{SumUpClient, Result, Merchant, MerchantProfile};
+use crate::{SumUpClient, Result, Merchant, MerchantProfile, MerchantProfileDetails};
 
 impl SumUpClient {
     /// Retrieves the authenticated merchant's profile.
     ///
     /// This endpoint returns the profile of the currently authenticated merchant.
     /// The merchant_code is automatically determined from the API key.
-    pub async fn get_merchant_profile(&self) -> Result<MerchantProfile> {
+    pub async fn get_merchant_profile(&self) -> Result<MerchantProfileDetails> {
         let url = self.build_url("/v0.1/me")?;
 
         let response = self
@@ -16,8 +16,8 @@ impl SumUpClient {
             .await?;
 
         if response.status().is_success() {
-            let profile = response.json::<MerchantProfile>().await?;
-            Ok(profile)
+            let full_profile = response.json::<MerchantProfile>().await?;
+            Ok(full_profile.merchant_profile)
         } else {
             self.handle_error(response).await
         }

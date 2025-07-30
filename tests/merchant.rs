@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, MerchantProfile};
+use sumup_rs::{SumUpClient, MerchantProfile, MerchantProfileDetails, DoingBusinessAs};
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path};
 
@@ -9,39 +9,67 @@ async fn test_get_merchant_profile_success() {
     let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let _expected_profile = MerchantProfile {
-        merchant_code: "merchant_123".to_string(),
-        name: "Test Merchant".to_string(),
-        email: "merchant@test.com".to_string(),
-        phone: "+1234567890".to_string(),
-        address: sumup_rs::Address {
-            line_1: Some("123 Test St".to_string()),
-            line_2: None,
-            city: Some("Test City".to_string()),
-            state: None,
-            postal_code: Some("12345".to_string()),
-            country: Some("US".to_string()),
+        merchant_profile: MerchantProfileDetails {
+            merchant_code: "merchant_123".to_string(),
+            name: "Test Merchant".to_string(),
+            phone: "+1234567890".to_string(),
+            address: sumup_rs::Address {
+                line_1: Some("123 Test St".to_string()),
+                line_2: None,
+                city: Some("Test City".to_string()),
+                state: None,
+                postal_code: Some("12345".to_string()),
+                country: Some("US".to_string()),
+            },
+            country: "US".to_string(),
+            currency: "USD".to_string(),
+            website: None,
+            doing_business_as: Some(DoingBusinessAs {
+                email: "merchant@test.com".to_string(),
+                name: "Test Merchant".to_string(),
+                website: None,
+                address: sumup_rs::Address {
+                    line_1: Some("123 Test St".to_string()),
+                    line_2: None,
+                    city: Some("Test City".to_string()),
+                    state: None,
+                    postal_code: Some("12345".to_string()),
+                    country: Some("US".to_string()),
+                },
+            }),
         },
-        country: "US".to_string(),
-        currency: "USD".to_string(),
-        timezone: "America/New_York".to_string(),
     };
 
     let response_body = serde_json::json!({
-        "merchant_code": "merchant_123",
-        "name": "Test Merchant",
-        "email": "merchant@test.com",
-        "phone": "+1234567890",
-        "address": {
-            "line_1": "123 Test St",
-            "line_2": null,
-            "city": "Test City",
-            "state": null,
-            "postal_code": "12345",
-            "country": "US"
-        },
-        "country": "US",
-        "currency": "USD",
-        "timezone": "America/New_York"
+        "merchant_profile": {
+            "merchant_code": "merchant_123",
+            "company_name": "Test Merchant",
+            "mobile_phone": "+1234567890",
+            "address": {
+                "line_1": "123 Test St",
+                "line_2": null,
+                "city": "Test City",
+                "state": null,
+                "postal_code": "12345",
+                "country": "US"
+            },
+            "country": "US",
+            "default_currency": "USD",
+            "website": null,
+            "doing_business_as": {
+                "email": "merchant@test.com",
+                "business_name": "Test Merchant",
+                "website": null,
+                "address": {
+                    "line_1": "123 Test St",
+                    "line_2": null,
+                    "city": "Test City",
+                    "state": null,
+                    "postal_code": "12345",
+                    "country": "US"
+                }
+            }
+        }
     });
 
     Mock::given(method("GET"))
@@ -58,7 +86,7 @@ async fn test_get_merchant_profile_success() {
     let profile = result.unwrap();
     assert_eq!(profile.merchant_code, "merchant_123");
     assert_eq!(profile.name, "Test Merchant");
-    assert_eq!(profile.email, "merchant@test.com");
+    assert_eq!(profile.doing_business_as.as_ref().unwrap().email, "merchant@test.com");
     assert_eq!(profile.currency, "USD");
 }
 

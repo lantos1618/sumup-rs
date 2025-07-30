@@ -2,15 +2,25 @@ use sumup_rs::{SumUpClient, CreateCheckoutRequest, ProcessCheckoutRequest, CardD
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load environment variables
+    dotenv::from_filename(".env.local").ok();
+    
+    let api_key = std::env::var("SUMUP_API_KEY")
+        .expect("SUMUP_API_KEY environment variable must be set");
+    
     // Create a client (use sandbox for testing)
-    let client = SumUpClient::new("your-api-key-here".to_string(), true)?;
+    let client = SumUpClient::new(api_key, true)?;
+    
+    // Get the merchant profile to use the correct merchant code
+    let merchant_profile = client.get_merchant_profile().await?;
+    println!("Using merchant code: {}", merchant_profile.merchant_code);
     
     // Create a checkout request
     let checkout_request = CreateCheckoutRequest {
         checkout_reference: "order-123".to_string(),
         amount: 25.50,
-        currency: "EUR".to_string(),
-        merchant_code: "M123456".to_string(),
+        currency: merchant_profile.currency.clone(),
+        merchant_code: merchant_profile.merchant_code.clone(),
         description: Some("Coffee and pastry".to_string()),
         return_url: Some("https://your-app.com/return".to_string()),
         customer_id: None,
@@ -58,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             
             // Get available payment methods
             println!("\nGetting available payment methods...");
-            match client.get_available_payment_methods("M123456", Some(25.50), Some("EUR")).await {
+            match client.get_available_payment_methods(&merchant_profile.merchant_code, Some(25.50), Some(&merchant_profile.currency)).await {
                 Ok(methods) => {
                     println!("✅ Found {} available payment method(s)", methods.available_payment_methods.len());
                     for method in &methods.available_payment_methods {
