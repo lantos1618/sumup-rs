@@ -17,6 +17,9 @@ pub mod memberships;
 pub mod members;
 pub mod roles;
 
+// Re-export query types for convenience
+pub use transactions::TransactionHistoryQuery;
+
 // --- Custom Error Type ---
 #[derive(Debug)]
 pub enum Error {

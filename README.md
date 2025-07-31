@@ -4,12 +4,13 @@ A comprehensive, type-safe Rust client for the SumUp API. This library provides 
 
 ## Features
 
-- **Complete API Coverage**: All SumUp API endpoints are supported
-- **Type Safety**: Full Rust type definitions for all request/response models
-- **Async/Await**: Built on Tokio for high-performance async operations
-- **Error Handling**: Comprehensive error types with proper error propagation
-- **Documentation**: Full API documentation with examples
-- **Sandbox Support**: Easy switching between production and sandbox environments
+- **Complete API Coverage**: All SumUp API endpoints are supported, including payments, customers, transactions, and team management.
+- **Type Safety**: Full Rust type definitions for all request/response models ensure correctness at compile time.
+- **Async/Await**: Built on Tokio for high-performance, non-blocking I/O.
+- **Robust Error Handling**: Comprehensive error types for handling API, network, and validation errors gracefully.
+- **3DS Support**: Correctly handles 3DS payment flows by differentiating between immediate success and required authentication steps.
+- **Ergonomic Queries**: Type-safe query builders for endpoints with complex filtering and pagination.
+- **Sandbox Support**: Easy switching between production and sandbox environments for safe development and testing.
 
 ## Installation
 
@@ -17,7 +18,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-sumup-rs = "0.1.0"
+sumup-rs = "0.2.0"
 ```
 
 ## Quick Start
@@ -33,13 +34,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Create a client (use sandbox for testing)
     let client = SumUpClient::new(api_key, true)?;
+
+    // Get your merchant profile to use the correct merchant code
+    let merchant_profile = client.get_merchant_profile().await?;
     
     // Create a checkout
     let checkout_request = CreateCheckoutRequest {
         checkout_reference: "order-123".to_string(),
         amount: 29.99,
-        currency: "EUR".to_string(),
-        merchant_code: "your-merchant-code".to_string(),
+        currency: merchant_profile.currency.clone(),
+        merchant_code: merchant_profile.merchant_code.clone(),
         description: Some("Coffee and pastry".to_string()),
         return_url: Some("https://your-site.com/return".to_string()),
         customer_id: None,
@@ -48,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     
     let checkout = client.create_checkout(&checkout_request).await?;
-    println!("Created checkout: {:?}", checkout);
+    println!("Created checkout: {:?}", checkout.id);
     
     Ok(())
 }
@@ -59,178 +63,51 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 This client supports all SumUp API endpoints:
 
 ### Checkouts
-- Create, retrieve, process, and deactivate checkouts
-- List checkouts by reference
-- Get available payment methods
+- Create, retrieve, process, and deactivate checkouts.
+- **Correctly handles 3DS payment flows.**
+- List checkouts with advanced filtering.
+- Get available payment methods.
 
 ### Customers
-- Create, retrieve, update, and delete customers
-- Manage customer payment instruments
-- Handle customer personal details and addresses
+- Full CRUD operations for customer management.
+- Manage customer payment instruments.
 
 ### Transactions
-- List and retrieve transactions
-- Support for both authenticated merchant and specific merchant endpoints
+- List transaction history with powerful, type-safe query parameters.
+- Retrieve full details for any transaction.
+- Refund transactions.
 
 ### Merchants
-- Retrieve merchant profiles
-- List accessible merchants
+- Retrieve profiles for the authenticated user or specific merchants.
+- List all merchants accessible to the authenticated user.
 
-### Payouts
-- List and retrieve payout information
-- Support for both authenticated merchant and specific merchant endpoints
+### Team Management (Memberships, Roles, Members)
+- **Fully functional and corrected implementation.**
+- Full CRUD operations for memberships, custom roles, and team members.
+- Assign roles and permissions to team members.
 
-### Receipts
-- List and retrieve receipt information
-- Support for both authenticated merchant and specific merchant endpoints
-
-### Readers
-- List and retrieve reader information
-- Support for both authenticated merchant and specific merchant endpoints
-
-### Memberships
-- Create, retrieve, update, and delete memberships
-- Support for both authenticated merchant and specific merchant endpoints
-
-### Members
-- Create, retrieve, update, and delete members within memberships
-- Support for both authenticated merchant and specific merchant endpoints
-
-### Roles
-- Create, retrieve, update, and delete roles within memberships
-- Support for both authenticated merchant and specific merchant endpoints
-
-## Project Structure
-
-```
-src/
-├── lib.rs          # Main client, error types, module declarations
-├── models.rs       # All request/response data structures
-├── checkouts.rs    # Checkout API endpoints
-├── customers.rs    # Customer API endpoints
-├── transactions.rs # Transaction API endpoints
-├── merchant.rs     # Merchant API endpoints
-├── payouts.rs      # Payout API endpoints
-├── receipts.rs     # Receipt API endpoints
-├── readers.rs      # Reader API endpoints
-├── memberships.rs  # Membership API endpoints
-├── members.rs      # Member API endpoints
-└── roles.rs        # Role API endpoints
-```
+### Payouts, Receipts & Readers
+- List and retrieve financial payouts and transaction receipts.
+- Manage physical card readers and initiate in-person payments.
 
 ## Error Handling
 
-The client uses a custom `Error` type that handles various error scenarios:
+The client uses a custom `Error` type that provides structured information about API errors:
 
 ```rust
 use sumup_rs::{Error, Result};
 
+// ... inside an async function
 match client.create_checkout(&request).await {
     Ok(checkout) => println!("Success: {:?}", checkout),
-    Err(Error::Http(e)) => println!("HTTP error: {}", e),
-    Err(Error::Json(e)) => println!("JSON error: {}", e),
-    Err(Error::ApiError { status, message }) => println!("API error {}: {}", status, message),
-    Err(Error::Url(e)) => println!("URL error: {}", e),
+    Err(Error::Http(e)) => eprintln!("HTTP error: {}", e),
+    Err(Error::Json(e)) => eprintln!("JSON error: {}", e),
+    Err(Error::ApiError { status, body }) => {
+        eprintln!("API error (Status {}): {}", status, body.message.as_deref().unwrap_or("No details"));
+    }
+    Err(e) => eprintln!("An unexpected error occurred: {}", e),
 }
 ```
-
-## Examples
-
-### Creating a Checkout
-
-```rust
-use sumup_rs::{SumUpClient, CreateCheckoutRequest};
-
-let client = SumUpClient::new("your-api-key".to_string(), false)?;
-
-let request = CreateCheckoutRequest {
-    checkout_reference: "order-123".to_string(),
-    amount: 29.99,
-    currency: "EUR".to_string(),
-    merchant_code: "your-merchant-code".to_string(),
-    description: Some("Coffee and pastry".to_string()),
-    return_url: Some("https://your-site.com/return".to_string()),
-    customer_id: None,
-    purpose: None,
-    redirect_url: None,
-};
-
-let checkout = client.create_checkout(&request).await?;
-```
-
-### Processing a Checkout
-
-```rust
-use sumup_rs::{SumUpClient, ProcessCheckoutRequest, CardDetails};
-
-let request = ProcessCheckoutRequest {
-    payment_type: "card".to_string(),
-    installments: None,
-    card: Some(CardDetails {
-        number: "4111111111111111".to_string(),
-        expiry_month: "12".to_string(),
-        expiry_year: "2025".to_string(),
-        cvc: "123".to_string(),
-        name: Some("John Doe".to_string()),
-    }),
-    token: None,
-    customer_id: None,
-};
-
-let processed_checkout = client.process_checkout("checkout-id", &request).await?;
-```
-
-### Managing Customers
-
-```rust
-use sumup_rs::{SumUpClient, CreateCustomerRequest, PersonalDetails, Address};
-
-let personal_details = PersonalDetails {
-    first_name: Some("John".to_string()),
-    last_name: Some("Doe".to_string()),
-    email: Some("john.doe@example.com".to_string()),
-    phone: Some("+1234567890".to_string()),
-    birth_date: Some("1990-01-01".to_string()),
-    address: Some(Address {
-        city: Some("New York".to_string()),
-        country: Some("US".to_string()),
-        line_1: Some("123 Main St".to_string()),
-        postal_code: Some("10001".to_string()),
-        state: Some("NY".to_string()),
-    }),
-};
-
-let request = CreateCustomerRequest { personal_details };
-let customer = client.create_customer(&request).await?;
-```
-
-## Development Status
-
-This project is actively being developed with a solid foundation and several completed modules.
-
-### ✅ **Completed Implementations**
-
-- **Data Models**: Complete modular model structure with proper serialization
-- **Customer API**: Full CRUD operations with comprehensive testing
-- **Transaction API**: List transactions with query parameters and pagination
-- **Merchant API**: Retrieve merchant profiles and list accessible merchants
-- **Testing Infrastructure**: Wiremock-based testing with comprehensive test coverage
-
-### 🔄 **In Progress**
-
-- **Checkout API**: Models defined, implementation in progress
-- **Payout API**: Models defined, implementation in progress
-- **Receipt API**: Models defined, implementation in progress
-- **Reader API**: Models defined, implementation in progress
-- **Membership/Member/Role APIs**: Models defined, implementation in progress
-
-### 📋 **Next Steps**
-
-1. **Complete Core APIs**: Implement remaining HTTP logic for checkouts, payouts, receipts, and readers
-2. **Add Integration Tests**: Expand test coverage for all implemented endpoints
-3. **Update Examples**: Add working examples for all completed APIs
-4. **Enhance Error Handling**: Add more specific error types for better user experience
-5. **Add CI/CD**: Set up continuous integration and deployment
 
 ## Contributing
 

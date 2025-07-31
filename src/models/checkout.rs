@@ -59,7 +59,7 @@ pub struct CreateCheckoutRequest {
 }
 
 /// Query parameters for listing checkouts
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CheckoutListQuery {
     /// Unique ID of the payment checkout specified by the client application
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -125,4 +125,30 @@ pub struct AvailablePaymentMethod {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AvailablePaymentMethodsResponse {
     pub available_payment_methods: Vec<AvailablePaymentMethod>,
+}
+
+/// Response for processing a checkout, which can be an immediate success or require 3DS authentication.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ProcessCheckoutResponse {
+    Success(Checkout),
+    Accepted(CheckoutAccepted),
+}
+
+/// Represents a 202 Accepted response, typically for 3DS authentication.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckoutAccepted {
+    pub next_step: NextStep,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NextStep {
+    pub url: String,
+    pub method: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub redirect_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub mechanism: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub payload: Option<serde_json::Value>,
 } 

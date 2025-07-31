@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, CreateCheckoutRequest, ProcessCheckoutRequest, CardDetails};
+use sumup_rs::{SumUpClient, CreateCheckoutRequest, ProcessCheckoutRequest, ProcessCheckoutResponse, CardDetails};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -97,9 +97,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
             
             match client.process_checkout(&checkout.id, &process_request).await {
-                Ok(processed_checkout) => {
+                Ok(ProcessCheckoutResponse::Success(processed_checkout)) => {
                     println!("✅ Checkout processed successfully!");
                     println!("   Status: {}", processed_checkout.status);
+                }
+                Ok(ProcessCheckoutResponse::Accepted(accepted)) => {
+                    println!("✅ Checkout accepted - 3DS authentication required!");
+                    println!("   Next step URL: {}", accepted.next_step.url);
                 }
                 Err(e) => {
                     println!("❌ Failed to process checkout: {}", e);

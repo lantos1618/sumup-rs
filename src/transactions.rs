@@ -1,4 +1,18 @@
 use crate::{SumUpClient, Result, Transaction, TransactionHistoryResponse};
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct TransactionHistoryQuery<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub newest_time: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oldest_time: Option<&'a str>,
+    // Add other query parameters as needed
+}
 
 impl SumUpClient {
     /// Lists detailed history of all transactions associated with the merchant profile.
@@ -6,33 +20,21 @@ impl SumUpClient {
     ///
     /// # Arguments
     /// * `merchant_code` - The merchant's unique code.
-    /// * `limit` - The maximum number of transactions to return.
-    /// * `order` - Sort order (e.g., "asc", "desc").
-    /// * `newest_time` - The timestamp of the newest transaction to start from.
+    /// * `query` - A struct with query parameters for filtering and pagination.
     pub async fn list_transactions_history(
         &self,
         merchant_code: &str,
-        limit: Option<i32>,
-        order: Option<&str>,
-        newest_time: Option<&str>,
+        query: &TransactionHistoryQuery<'_>,
     ) -> Result<TransactionHistoryResponse> {
-        let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions/history", merchant_code))?;
+        let url = self.build_url(&format!("/v2.1/merchants/{}/transactions/history", merchant_code))?;
 
-        { // Scoped to release the mutable borrow on url
-            let mut query_pairs = url.query_pairs_mut();
-            if let Some(l) = limit {
-                query_pairs.append_pair("limit", &l.to_string());
-            }
-            if let Some(o) = order {
-                query_pairs.append_pair("order", o);
-            }
-            if let Some(nt) = newest_time {
-                query_pairs.append_pair("newest_time", nt);
-            }
-            // Add other query parameters here as needed...
-        }
-
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .query(query)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let history = response.json::<TransactionHistoryResponse>().await?;
@@ -254,9 +256,12 @@ impl SumUpClient {
             // Fetch the current page
             let history = self.list_transactions_history(
                 merchant_code,
-                Some(100), // Use a reasonable page size
-                order,
-                newest_time.as_deref(),
+                &TransactionHistoryQuery {
+                    limit: Some(100), // Use a reasonable page size
+                    order: order,
+                    newest_time: newest_time.as_deref(),
+                    oldest_time: None, // No oldest_time for this convenience method
+                },
             ).await?;
 
             // Check if there are more pages before moving data

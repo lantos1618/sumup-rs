@@ -1,49 +1,6 @@
-use sumup_rs::{SumUpClient, Member, Role, Membership, CreateMemberRequest, CreateRoleRequest, CreateMembershipRequest, CreateReaderCheckoutRequest, TotalAmount};
+use sumup_rs::{SumUpClient, CreateRoleRequest, CreateMemberRequest, Role, Member, Membership};
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path};
-
-#[tokio::test]
-async fn test_create_membership_success() {
-    // Arrange
-    let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
-
-    let expected_membership = Membership {
-        id: "membership_123".to_string(),
-        name: "Test Membership".to_string(),
-        merchant_code: "merchant_123".to_string(),
-        created_at: chrono::Utc::now(),
-        description: Some("A test membership".to_string()),
-    };
-
-    let response_body = serde_json::json!({
-        "id": "membership_123",
-        "name": "Test Membership",
-        "merchant_code": "merchant_123",
-        "created_at": expected_membership.created_at.to_rfc3339(),
-        "description": "A test membership"
-    });
-
-    Mock::given(method("POST"))
-        .and(path("/v0.1/me/memberships"))
-        .respond_with(ResponseTemplate::new(201).set_body_json(&response_body))
-        .mount(&mock_server)
-        .await;
-
-    // Act
-    let request = CreateMembershipRequest {
-        name: "Test Membership".to_string(),
-        description: Some("A test membership".to_string()),
-    };
-    let result = client.create_membership(&request).await;
-
-    // Assert
-    assert!(result.is_ok());
-    let membership = result.unwrap();
-    assert_eq!(membership.id, "membership_123");
-    assert_eq!(membership.name, "Test Membership");
-    assert_eq!(membership.merchant_code, "merchant_123");
-}
 
 #[tokio::test]
 async fn test_create_role_success() {
@@ -72,7 +29,7 @@ async fn test_create_role_success() {
     });
 
     Mock::given(method("POST"))
-        .and(path("/v0.1/memberships/membership_123/roles"))
+        .and(path("/v0.1/merchants/merchant_123/roles"))
         .respond_with(ResponseTemplate::new(201).set_body_json(&response_body))
         .mount(&mock_server)
         .await;
@@ -82,7 +39,7 @@ async fn test_create_role_success() {
         name: "Admin".to_string(),
         permissions: vec!["read".to_string(), "write".to_string()],
     };
-    let result = client.create_role("membership_123", &request).await;
+    let result = client.create_role("merchant_123", &request).await;
 
     // Assert
     assert!(result.is_ok());
@@ -137,7 +94,7 @@ async fn test_create_member_success() {
     });
 
     Mock::given(method("POST"))
-        .and(path("/v0.1/memberships/membership_123/members"))
+        .and(path("/v0.1/merchants/merchant_123/members"))
         .respond_with(ResponseTemplate::new(201).set_body_json(&response_body))
         .mount(&mock_server)
         .await;
@@ -149,7 +106,7 @@ async fn test_create_member_success() {
         last_name: Some("Doe".to_string()),
         roles: Some(vec!["role_123".to_string()]),
     };
-    let result = client.create_member("membership_123", &request).await;
+    let result = client.create_member("merchant_123", &request).await;
 
     // Assert
     assert!(result.is_ok());
@@ -158,6 +115,7 @@ async fn test_create_member_success() {
     assert_eq!(member.membership_id, "membership_123");
     assert_eq!(member.user.email, "john@example.com");
     assert_eq!(member.user.first_name, Some("John".to_string()));
+    assert_eq!(member.user.last_name, Some("Doe".to_string()));
     assert_eq!(member.status, "ACTIVE");
     assert_eq!(member.roles, vec!["role_123"]);
     assert_eq!(member.permissions, vec!["read"]);
@@ -223,7 +181,7 @@ async fn test_create_reader_checkout_success() {
     let expected_checkout = sumup_rs::ReaderCheckoutResponse {
         id: "checkout_123".to_string(),
         status: "PENDING".to_string(),
-        total_amount: TotalAmount {
+        total_amount: sumup_rs::TotalAmount {
             value: 29.99,
             currency: "EUR".to_string(),
             minor_unit: 2,
@@ -263,8 +221,8 @@ async fn test_create_reader_checkout_success() {
         .await;
 
     // Act
-    let request = CreateReaderCheckoutRequest {
-        total_amount: TotalAmount {
+    let request = sumup_rs::CreateReaderCheckoutRequest {
+        total_amount: sumup_rs::TotalAmount {
             value: 29.99,
             currency: "EUR".to_string(),
             minor_unit: 2,

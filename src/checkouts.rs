@@ -1,4 +1,4 @@
-use crate::{SumUpClient, Result, CreateCheckoutRequest, Checkout, ProcessCheckoutRequest, DeletedCheckout, AvailablePaymentMethodsResponse, CheckoutListQuery};
+use crate::{SumUpClient, Result, CreateCheckoutRequest, Checkout, ProcessCheckoutRequest, ProcessCheckoutResponse, DeletedCheckout, AvailablePaymentMethodsResponse, CheckoutListQuery};
 
 impl SumUpClient {
     /// Lists created checkout resources according to the applied checkout_reference.
@@ -141,6 +141,7 @@ impl SumUpClient {
     }
 
     /// Processing a checkout will attempt to charge the provided payment instrument.
+    /// This can result in immediate success or require a 3DS redirect.
     ///
     /// # Arguments
     /// * `checkout_id` - The unique ID of the checkout resource to process.
@@ -149,7 +150,7 @@ impl SumUpClient {
         &self,
         checkout_id: &str,
         body: &ProcessCheckoutRequest,
-    ) -> Result<Checkout> {
+    ) -> Result<ProcessCheckoutResponse> {
         let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
 
         let response = self
@@ -160,11 +161,16 @@ impl SumUpClient {
             .send()
             .await?;
 
-        if response.status().is_success() {
-            let checkout = response.json::<Checkout>().await?;
-            Ok(checkout)
-        } else {
-            self.handle_error(response).await
+        match response.status().as_u16() {
+            200 => {
+                let checkout = response.json::<Checkout>().await?;
+                Ok(ProcessCheckoutResponse::Success(checkout))
+            },
+            202 => {
+                let accepted = response.json::<crate::CheckoutAccepted>().await?;
+                Ok(ProcessCheckoutResponse::Accepted(accepted))
+            },
+            _ => self.handle_error(response).await
         }
     }
 

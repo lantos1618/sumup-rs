@@ -3,7 +3,8 @@ use sumup_rs::{
     CreateCustomerRequest, 
     UpdateCustomerRequest, 
     PersonalDetails, 
-    Address
+    Address,
+    TransactionHistoryQuery
 };
 
 #[tokio::main]
@@ -140,12 +141,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|_| "your_merchant_code".to_string());
     
     if merchant_code != "your_merchant_code" {
-        match client.list_transactions_history(
-            &merchant_code,
-            Some(10), // Limit to 10 transactions
-            Some("desc"), // Sort by newest first
-            None, // No specific newest_time filter
-        ).await {
+        let query = TransactionHistoryQuery {
+            limit: Some(10), // Limit to 10 transactions
+            order: Some("desc"), // Sort by newest first
+            newest_time: None, // No specific newest_time filter
+            oldest_time: None,
+        };
+        match client.list_transactions_history(&merchant_code, &query).await {
             Ok(history) => {
                 println!("✅ Found {} transactions", history.items.len());
                 for (i, transaction) in history.items.iter().enumerate() {

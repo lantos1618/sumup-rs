@@ -2,6 +2,7 @@ use sumup_rs::{
     SumUpClient, 
     CreateCheckoutRequest, 
     ProcessCheckoutRequest, 
+    ProcessCheckoutResponse,
     CardDetails,
     PersonalDetails,
     Address
@@ -117,11 +118,18 @@ async fn test_process_checkout_with_mock_card_success() {
     // 3. Assert: Check if the payment was processed successfully
     assert!(result.is_ok());
     let processed_checkout = result.unwrap();
-    assert_eq!(processed_checkout.status, "PAID");
-    assert_eq!(processed_checkout.transaction_id, Some("txn-67890".to_string()));
-    assert_eq!(processed_checkout.transaction_code, Some("TXN123".to_string()));
-    assert!(!processed_checkout.transactions.is_empty());
-    assert_eq!(processed_checkout.transactions[0].status, Some("SUCCESSFUL".to_string()));
+    match processed_checkout {
+        ProcessCheckoutResponse::Success(checkout) => {
+            assert_eq!(checkout.status, "PAID");
+            assert_eq!(checkout.transaction_id, Some("txn-67890".to_string()));
+            assert_eq!(checkout.transaction_code, Some("TXN123".to_string()));
+            assert!(!checkout.transactions.is_empty());
+            assert_eq!(checkout.transactions[0].status, Some("SUCCESSFUL".to_string()));
+        }
+        ProcessCheckoutResponse::Accepted(_) => {
+            panic!("Expected success response, got accepted response");
+        }
+    }
 }
 
 #[tokio::test]
@@ -326,9 +334,16 @@ async fn test_process_checkout_with_customer_details() {
 
     assert!(result.is_ok());
     let processed_checkout = result.unwrap();
-    assert_eq!(processed_checkout.status, "PAID");
-    assert_eq!(processed_checkout.customer_id, Some("cust-123".to_string()));
-    assert_eq!(processed_checkout.transaction_id, Some("txn-customer-123".to_string()));
+    match processed_checkout {
+        ProcessCheckoutResponse::Success(checkout) => {
+            assert_eq!(checkout.status, "PAID");
+            assert_eq!(checkout.customer_id, Some("cust-123".to_string()));
+            assert_eq!(checkout.transaction_id, Some("txn-customer-123".to_string()));
+        }
+        ProcessCheckoutResponse::Accepted(_) => {
+            panic!("Expected success response, got accepted response");
+        }
+    }
 }
 
 #[tokio::test]
@@ -384,7 +399,7 @@ async fn test_process_checkout_with_real_api() {
             let payment_result = client.process_checkout(&checkout.id, &process_request).await;
             
             match payment_result {
-                Ok(processed_checkout) => {
+                Ok(ProcessCheckoutResponse::Success(processed_checkout)) => {
                     println!("✅ Successfully processed payment!");
                     println!("   Status: {}", processed_checkout.status);
                     println!("   Transaction ID: {:?}", processed_checkout.transaction_id);
@@ -392,6 +407,10 @@ async fn test_process_checkout_with_real_api() {
                     
                     // The payment should be successful with mock card
                     assert!(processed_checkout.status == "PAID" || processed_checkout.status == "SUCCESSFUL");
+                }
+                Ok(ProcessCheckoutResponse::Accepted(accepted)) => {
+                    println!("✅ Payment accepted - 3DS authentication required!");
+                    println!("   Next step URL: {}", accepted.next_step.url);
                 }
                 Err(e) => {
                     println!("❌ Payment processing failed: {}", e);
@@ -539,7 +558,14 @@ async fn test_different_mock_card_types() {
         if is_success {
             assert!(result.is_ok(), "Expected success for card {}", card_number);
             let processed = result.unwrap();
-            assert_eq!(processed.status, "PAID");
+            match processed {
+                ProcessCheckoutResponse::Success(checkout) => {
+                    assert_eq!(checkout.status, "PAID");
+                }
+                ProcessCheckoutResponse::Accepted(_) => {
+                    panic!("Expected success response, got accepted response");
+                }
+            }
         } else {
             assert!(result.is_err(), "Expected error for card {}", card_number);
         }

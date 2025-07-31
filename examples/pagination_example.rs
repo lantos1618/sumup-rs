@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, CheckoutListQuery};
+use sumup_rs::{SumUpClient, TransactionHistoryQuery, CheckoutListQuery};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,12 +21,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         println!("  Fetching page {}...", page_count + 1);
         
-        let history = client.list_transactions_history(
-            merchant_code,
-            Some(10), // Small page size for demonstration
-            Some("desc"),
-            newest_time.as_deref(),
-        ).await?;
+        let query = TransactionHistoryQuery {
+            limit: Some(10), // Small page size for demonstration
+            order: Some("desc"),
+            newest_time: newest_time.as_deref(),
+            oldest_time: None,
+        };
+        let history = client.list_transactions_history(merchant_code, &query).await?;
         
         println!("    Found {} transactions on this page", history.items.len());
         
@@ -102,12 +103,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Example 4: Pagination helper functions
     println!("\n4. Using pagination helper functions...");
-    let history = client.list_transactions_history(
-        merchant_code,
-        Some(5),
-        Some("desc"),
-        None,
-    ).await?;
+    let query = TransactionHistoryQuery {
+        limit: Some(5),
+        order: Some("desc"),
+        newest_time: None,
+        oldest_time: None,
+    };
+    let history = client.list_transactions_history(merchant_code, &query).await?;
     
     // Check for next page
     if let Some(next_url) = SumUpClient::get_next_page_url_from_history(&history) {

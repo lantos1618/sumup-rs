@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, CreateCheckoutRequest, PersonalDetails, Address, CreateCustomerRequest};
+use sumup_rs::{SumUpClient, CreateCheckoutRequest, PersonalDetails, Address, CreateCustomerRequest, TransactionHistoryQuery};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -59,7 +59,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Example 3: List transactions
     println!("\n3. Listing transactions...");
-    let transactions = client.list_transactions_history("your-merchant-code", Some(10), Some("desc"), None).await?;
+    let query = TransactionHistoryQuery {
+        limit: Some(10),
+        order: Some("desc"),
+        newest_time: None,
+        oldest_time: None,
+    };
+    let transactions = client.list_transactions_history("your-merchant-code", &query).await?;
     println!("Found {} transactions", transactions.items.len());
     
     // Example 4: Get merchant profile
