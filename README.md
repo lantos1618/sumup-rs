@@ -109,6 +109,57 @@ match client.create_checkout(&request).await {
 }
 ```
 
+## Examples
+
+### Basic Usage
+```bash
+cargo run --example basic_usage
+```
+
+### 3DS Payment Testing
+The library includes comprehensive examples for testing 3DS (3D Secure) authentication:
+
+```bash
+# Setup 3DS testing
+cargo run --example setup_3ds_testing
+
+# Basic 3DS demo (automated testing)
+cargo run --example 3ds_payment_demo
+
+# Comprehensive 3DS demo with webhook monitoring
+cargo run --example 3ds_comprehensive_demo
+
+# Manual 3DS testing (recommended for sandbox)
+cargo run --example 3ds_manual_test
+```
+
+#### 3DS Test Cards
+The examples use specific test cards designed to trigger 3DS authentication:
+- `4000000000003220` - Visa (3DS Authentication Required)
+- `4000000000009995` - Visa (3DS with Insufficient Funds)
+- `4000000000000002` - Visa (3DS Declined)
+- `4000000000009987` - Visa (3DS Lost Card)
+- `4000000000009979` - Visa (3DS Stolen Card)
+
+#### 3DS Testing Setup
+1. Get a webhook URL from [webhook.site](https://webhook.site)
+2. Update the `return_url` in the examples
+3. Run the demo and follow the 3DS authentication flow
+
+**Note**: Sandbox 3DS behavior may be limited. Real 3DS testing requires a production environment.
+
+#### Manual 3DS Testing (Recommended)
+For sandbox environments, manual testing is often more reliable:
+1. Run `cargo run --example 3ds_manual_test`
+2. Open the provided checkout URL in your browser
+3. Use test cards to trigger 3DS authentication
+4. Monitor payment status in real-time
+
+### Working Checkout Demo
+```bash
+cargo run --example working_checkout_demo
+```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
