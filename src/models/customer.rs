@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 use super::common::Card;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Customer {
@@ -66,4 +66,4 @@ pub struct PaymentInstrument {
     #[serde(default)]
     pub card: Option<Card>,
     pub created_at: DateTime<Utc>,
-} 
+}

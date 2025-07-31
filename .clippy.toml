@@ -1,0 +1,19 @@
+# Clippy configuration for consistent linting
+# Documentation: https://rust-lang.github.io/rust-clippy/master/
+
+# Allow common patterns in API client code
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-panic-in-tests = true
+allow-print-in-tests = true
+allow-dbg-in-tests = true
+
+# More lenient thresholds for API client code
+too-many-arguments-threshold = 10
+type-complexity-threshold = 50
+too-many-lines-threshold = 500
+max-fn-params-bools = 6
+max-struct-bools = 8
+
+# MSRV
+msrv = "1.70.0" 

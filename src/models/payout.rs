@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Payout {
@@ -25,4 +25,4 @@ pub struct BankAccount {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PayoutListResponse {
     pub payouts: Vec<Payout>,
-} 
+}

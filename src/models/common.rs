@@ -9,7 +9,7 @@ pub struct CardDetails {
     pub number: String,
     pub expiry_month: String,
     pub expiry_year: String,
-    pub cvc: String,
+    pub cvv: String, // Corrected from `cvc` to `cvv` to match SumUp API specification
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -57,4 +57,4 @@ pub struct PaginatedResponse<T> {
     pub next_cursor: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prev_cursor: Option<String>,
-} 
+}

@@ -1,9 +1,7 @@
+#![allow(clippy::type_complexity)]
 use sumup_rs::{
-    SumUpClient, 
-    CreateCustomerRequest, 
-    UpdateCustomerRequest, 
-    PersonalDetails, 
-    Address
+    Address, CreateCustomerRequest, PersonalDetails, SumUpClient, TransactionHistoryQuery,
+    UpdateCustomerRequest,
 };
 
 #[tokio::main]
@@ -11,12 +9,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the client with your API key
     let api_key = std::env::var("SUMUP_API_SECRET_KEY")
         .expect("SUMUP_API_SECRET_KEY environment variable must be set");
-    
+
     let client = SumUpClient::new(api_key, false)?;
 
     // Example 1: Create a new customer with full details
     println!("=== Creating a new customer ===");
-    
+
     let customer_request = CreateCustomerRequest {
         customer_id: format!("cust_{}", chrono::Utc::now().timestamp()),
         personal_details: Some(PersonalDetails {
@@ -42,7 +40,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("✅ Customer created successfully!");
             println!("   Customer ID: {}", customer.customer_id);
             if let Some(details) = &customer.personal_details {
-                println!("   Name: {} {}", 
+                println!(
+                    "   Name: {} {}",
                     details.first_name.as_deref().unwrap_or("N/A"),
                     details.last_name.as_deref().unwrap_or("N/A")
                 );
@@ -57,8 +56,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 2: Retrieve the customer we just created
     println!("\n=== Retrieving customer ===");
-    
-    match client.retrieve_customer(&customer_request.customer_id).await {
+
+    match client
+        .retrieve_customer(&customer_request.customer_id)
+        .await
+    {
         Ok(customer) => {
             println!("✅ Customer retrieved successfully!");
             println!("   Customer ID: {}", customer.customer_id);
@@ -71,7 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 3: Update customer information
     println!("\n=== Updating customer ===");
-    
+
     let update_request = UpdateCustomerRequest {
         personal_details: Some(PersonalDetails {
             first_name: Some("John".to_string()),
@@ -91,15 +93,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }),
     };
 
-    match client.update_customer(&customer_request.customer_id, &update_request).await {
+    match client
+        .update_customer(&customer_request.customer_id, &update_request)
+        .await
+    {
         Ok(customer) => {
             println!("✅ Customer updated successfully!");
             if let Some(details) = &customer.personal_details {
-                println!("   Updated Name: {} {}", 
+                println!(
+                    "   Updated Name: {} {}",
                     details.first_name.as_deref().unwrap_or("N/A"),
                     details.last_name.as_deref().unwrap_or("N/A")
                 );
-                println!("   Updated Email: {}", details.email.as_deref().unwrap_or("N/A"));
+                println!(
+                    "   Updated Email: {}",
+                    details.email.as_deref().unwrap_or("N/A")
+                );
                 if let Some(addr) = &details.address {
                     println!("   Updated City: {}", addr.city.as_deref().unwrap_or("N/A"));
                 }
@@ -113,15 +122,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 4: List customer payment instruments
     println!("\n=== Listing customer payment instruments ===");
-    
-    match client.list_customer_payment_instruments(&customer_request.customer_id).await {
+
+    match client
+        .list_customer_payment_instruments(&customer_request.customer_id)
+        .await
+    {
         Ok(instruments) => {
             println!("✅ Found {} payment instruments", instruments.len());
             for (i, instrument) in instruments.iter().enumerate() {
-                println!("   {}. Token: {}, Type: {}, Active: {}", 
-                    i + 1, 
-                    instrument.token, 
-                    instrument.instrument_type, 
+                println!(
+                    "   {}. Token: {}, Type: {}, Active: {}",
+                    i + 1,
+                    instrument.token,
+                    instrument.instrument_type,
                     instrument.active
                 );
             }
@@ -134,23 +147,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 5: List transaction history (requires a merchant code)
     println!("\n=== Listing transaction history ===");
-    
+
     // Note: You'll need to replace "your_merchant_code" with an actual merchant code
-    let merchant_code = std::env::var("SUMUP_MERCHANT_CODE")
-        .unwrap_or_else(|_| "your_merchant_code".to_string());
-    
+    let merchant_code =
+        std::env::var("SUMUP_MERCHANT_CODE").unwrap_or_else(|_| "your_merchant_code".to_string());
+
     if merchant_code != "your_merchant_code" {
-        match client.list_transactions_history(
-            &merchant_code,
-            Some(10), // Limit to 10 transactions
-            Some("desc"), // Sort by newest first
-            None, // No specific newest_time filter
-        ).await {
+        let query = TransactionHistoryQuery {
+            limit: Some(10),     // Limit to 10 transactions
+            order: Some("desc"), // Sort by newest first
+            newest_time: None,   // No specific newest_time filter
+            oldest_time: None,
+        };
+        match client
+            .list_transactions_history(&merchant_code, &query)
+            .await
+        {
             Ok(history) => {
                 println!("✅ Found {} transactions", history.items.len());
                 for (i, transaction) in history.items.iter().enumerate() {
-                    println!("   {}. ID: {}, Amount: {} {}, Status: {}", 
-                        i + 1, 
+                    println!(
+                        "   {}. ID: {}, Amount: {} {}, Status: {}",
+                        i + 1,
                         transaction.id,
                         transaction.amount,
                         transaction.currency,
@@ -169,17 +187,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 6: Retrieve a specific transaction (if we have a transaction ID)
     println!("\n=== Retrieving specific transaction ===");
-    
-    let transaction_id = std::env::var("SUMUP_TRANSACTION_ID")
-        .unwrap_or_else(|_| "your_transaction_id".to_string());
-    
+
+    let transaction_id =
+        std::env::var("SUMUP_TRANSACTION_ID").unwrap_or_else(|_| "your_transaction_id".to_string());
+
     if transaction_id != "your_transaction_id" && merchant_code != "your_merchant_code" {
-        match client.retrieve_transaction_by_id(&merchant_code, &transaction_id).await {
+        match client
+            .retrieve_transaction_by_id(&merchant_code, &transaction_id)
+            .await
+        {
             Ok(transaction) => {
                 println!("✅ Transaction retrieved successfully!");
                 println!("   ID: {}", transaction.id);
                 println!("   Amount: {} {}", transaction.amount, transaction.currency);
-                println!("   Status: {}", transaction.status.as_deref().unwrap_or("N/A"));
+                println!(
+                    "   Status: {}",
+                    transaction.status.as_deref().unwrap_or("N/A")
+                );
             }
             Err(e) => {
                 println!("❌ Failed to retrieve transaction: {:?}", e);
@@ -191,4 +215,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("\n=== Example completed successfully! ===");
     Ok(())
-} 
+}

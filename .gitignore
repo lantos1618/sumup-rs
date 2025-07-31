@@ -1,4 +1,34 @@
+# Rust build artifacts
 /target
-.env.local
+Cargo.lock
+
+# Environment files
 .env
+.env.local
+.env.*
+*.env
+
+# Logs
 *.log
+*.tmp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+test-results/
+coverage/
+
+# Sensitive files
+*secret*
+*private*
+*card*
+*payment*

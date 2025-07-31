@@ -1,17 +1,21 @@
-use sumup_rs::{SumUpClient, CreateCheckoutRequest, PersonalDetails, Address, CreateCustomerRequest};
+#![allow(clippy::type_complexity)]
+use sumup_rs::{
+    Address, CreateCheckoutRequest, CreateCustomerRequest, PersonalDetails, SumUpClient,
+    TransactionHistoryQuery,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get API key from environment variable
     let api_key = std::env::var("SUMUP_API_SECRET_KEY")
         .expect("Please set SUMUP_API_SECRET_KEY environment variable");
-    
+
     // Create a client (use sandbox for testing)
     let client = SumUpClient::new(api_key, true)?;
-    
+
     println!("SumUp API Client Example");
     println!("========================");
-    
+
     // Example 1: Create a customer
     println!("\n1. Creating a customer...");
     let personal_details = PersonalDetails {
@@ -30,14 +34,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             state: Some("NY".to_string()),
         }),
     };
-    
-    let customer_request = CreateCustomerRequest { 
+
+    let customer_request = CreateCustomerRequest {
         customer_id: "cust_12345".to_string(),
-        personal_details: Some(personal_details) 
+        personal_details: Some(personal_details),
     };
     let customer = client.create_customer(&customer_request).await?;
     println!("Created customer: {:?}", customer);
-    
+
     // Example 2: Create a checkout
     println!("\n2. Creating a checkout...");
     let _checkout_request = CreateCheckoutRequest {
@@ -51,25 +55,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         purpose: None,
         redirect_url: None,
     };
-    
+
     // Note: This will panic with unimplemented!() until the HTTP logic is implemented
     // let checkout = client.create_checkout(&checkout_request).await?;
     // println!("Created checkout: {:?}", checkout);
     println!("Checkout creation would be implemented here");
-    
+
     // Example 3: List transactions
     println!("\n3. Listing transactions...");
-    let transactions = client.list_transactions_history("your-merchant-code", Some(10), Some("desc"), None).await?;
+    let query = TransactionHistoryQuery {
+        limit: Some(10),
+        order: Some("desc"),
+        newest_time: None,
+        oldest_time: None,
+    };
+    let transactions = client
+        .list_transactions_history("your-merchant-code", &query)
+        .await?;
     println!("Found {} transactions", transactions.items.len());
-    
+
     // Example 4: Get merchant profile
     println!("\n4. Getting merchant profile...");
     let profile = client.get_merchant_profile().await?;
     println!("Merchant profile: {:?}", profile);
-    
+
     println!("\nExample completed successfully!");
     println!("Note: Customer, Transaction, and Merchant APIs are now fully implemented.");
     println!("Checkout API is still in progress.");
-    
+
     Ok(())
-} 
+}

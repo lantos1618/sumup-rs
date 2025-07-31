@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
@@ -28,4 +28,4 @@ pub struct UpdateRoleRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoleListResponse {
     pub roles: Vec<Role>,
-} 
+}

@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use sumup_rs::SumUpClient;
 
 #[tokio::test]
@@ -10,7 +11,7 @@ async fn test_merchant_profile_integration() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -18,7 +19,7 @@ async fn test_merchant_profile_integration() {
             return;
         }
     };
-    
+
     // Test merchant profile retrieval
     match client.get_merchant_profile().await {
         Ok(profile) => {
@@ -45,7 +46,7 @@ async fn test_list_merchants_integration() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -53,7 +54,7 @@ async fn test_list_merchants_integration() {
             return;
         }
     };
-    
+
     match client.list_merchants().await {
         Ok(merchants) => {
             // Should return a list (might be empty)
@@ -74,7 +75,7 @@ async fn test_create_customer_integration() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -82,7 +83,7 @@ async fn test_create_customer_integration() {
             return;
         }
     };
-    
+
     let customer_request = sumup_rs::CreateCustomerRequest {
         customer_id: format!("test-customer-{}", chrono::Utc::now().timestamp()),
         personal_details: Some(sumup_rs::PersonalDetails {
@@ -102,7 +103,7 @@ async fn test_create_customer_integration() {
             }),
         }),
     };
-    
+
     match client.create_customer(&customer_request).await {
         Ok(customer) => {
             assert_eq!(customer.customer_id, customer_request.customer_id);
@@ -111,4 +112,4 @@ async fn test_create_customer_integration() {
             println!("API test failed (expected with test key): {}", e);
         }
     }
-} 
+}

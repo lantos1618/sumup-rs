@@ -1,12 +1,14 @@
-use crate::{SumUpClient, Result, Member, CreateMemberRequest, UpdateMemberRequest, MemberListResponse};
+use crate::{
+    CreateMemberRequest, Member, MemberListResponse, Result, SumUpClient, UpdateMemberRequest,
+};
 
 impl SumUpClient {
-    /// Lists all members for a specific membership.
+    /// Lists all members for a specific merchant.
     ///
     /// # Arguments
-    /// * `membership_id` - The unique membership identifier
-    pub async fn list_members(&self, membership_id: &str) -> Result<MemberListResponse> {
-        let url = self.build_url(&format!("/v0.1/memberships/{}/members", membership_id))?;
+    /// * `merchant_code` - The unique merchant code identifier.
+    pub async fn list_members(&self, merchant_code: &str) -> Result<MemberListResponse> {
+        let url = self.build_url(&format!("/v0.1/merchants/{}/members", merchant_code))?;
 
         let response = self
             .http_client
@@ -23,36 +25,17 @@ impl SumUpClient {
         }
     }
 
-    /// Lists members for a specific merchant membership.
+    /// Creates a new member resource for a specific merchant.
     ///
     /// # Arguments
-    /// * `merchant_code` - The unique merchant code identifier
-    /// * `membership_id` - The unique membership identifier
-    pub async fn list_merchant_members(&self, merchant_code: &str, membership_id: &str) -> Result<MemberListResponse> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/memberships/{}/members", merchant_code, membership_id))?;
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let members = response.json::<MemberListResponse>().await?;
-            Ok(members)
-        } else {
-            self.handle_error(response).await
-        }
-    }
-
-    /// Creates a new member resource.
-    ///
-    /// # Arguments
-    /// * `membership_id` - The unique membership identifier
-    /// * `body` - The member details to create
-    pub async fn create_member(&self, membership_id: &str, body: &CreateMemberRequest) -> Result<Member> {
-        let url = self.build_url(&format!("/v0.1/memberships/{}/members", membership_id))?;
+    /// * `merchant_code` - The unique merchant code identifier.
+    /// * `body` - The member details to create.
+    pub async fn create_member(
+        &self,
+        merchant_code: &str,
+        body: &CreateMemberRequest,
+    ) -> Result<Member> {
+        let url = self.build_url(&format!("/v0.1/merchants/{}/members", merchant_code))?;
 
         let response = self
             .http_client
@@ -70,20 +53,21 @@ impl SumUpClient {
         }
     }
 
-    /// Creates a member for a specific merchant membership.
+    /// Retrieves an identified member resource for a specific merchant.
     ///
     /// # Arguments
-    /// * `merchant_code` - The unique merchant code identifier
-    /// * `membership_id` - The unique membership identifier
-    /// * `body` - The member details to create
-    pub async fn create_merchant_member(&self, merchant_code: &str, membership_id: &str, body: &CreateMemberRequest) -> Result<Member> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/memberships/{}/members", merchant_code, membership_id))?;
+    /// * `merchant_code` - The unique merchant code identifier.
+    /// * `member_id` - The unique member identifier.
+    pub async fn retrieve_member(&self, merchant_code: &str, member_id: &str) -> Result<Member> {
+        let url = self.build_url(&format!(
+            "/v0.1/merchants/{}/members/{}",
+            merchant_code, member_id
+        ))?;
 
         let response = self
             .http_client
-            .post(url)
+            .get(url)
             .bearer_auth(&self.api_key)
-            .json(body)
             .send()
             .await?;
 
@@ -95,51 +79,22 @@ impl SumUpClient {
         }
     }
 
-    /// Retrieves an identified member resource.
+    /// Updates an identified member resource for a specific merchant.
     ///
     /// # Arguments
-    /// * `membership_id` - The unique membership identifier
-    /// * `member_id` - The unique member identifier
-    pub async fn retrieve_member(&self, membership_id: &str, member_id: &str) -> Result<Member> {
-        let url = self.build_url(&format!("/v0.1/memberships/{}/members/{}", membership_id, member_id))?;
-
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
-
-        if response.status().is_success() {
-            let member = response.json::<Member>().await?;
-            Ok(member)
-        } else {
-            self.handle_error(response).await
-        }
-    }
-
-    /// Retrieves a member for a specific merchant membership.
-    ///
-    /// # Arguments
-    /// * `merchant_code` - The unique merchant code identifier
-    /// * `membership_id` - The unique membership identifier
-    /// * `member_id` - The unique member identifier
-    pub async fn retrieve_merchant_member(&self, merchant_code: &str, membership_id: &str, member_id: &str) -> Result<Member> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/memberships/{}/members/{}", merchant_code, membership_id, member_id))?;
-
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
-
-        if response.status().is_success() {
-            let member = response.json::<Member>().await?;
-            Ok(member)
-        } else {
-            self.handle_error(response).await
-        }
-    }
-
-    /// Updates an identified member resource.
-    ///
-    /// # Arguments
-    /// * `membership_id` - The unique membership identifier
-    /// * `member_id` - The unique member identifier
-    /// * `body` - The member details to update
-    pub async fn update_member(&self, membership_id: &str, member_id: &str, body: &UpdateMemberRequest) -> Result<Member> {
-        let url = self.build_url(&format!("/v0.1/memberships/{}/members/{}", membership_id, member_id))?;
+    /// * `merchant_code` - The unique merchant code identifier.
+    /// * `member_id` - The unique member identifier.
+    /// * `body` - The member details to update.
+    pub async fn update_member(
+        &self,
+        merchant_code: &str,
+        member_id: &str,
+        body: &UpdateMemberRequest,
+    ) -> Result<Member> {
+        let url = self.build_url(&format!(
+            "/v0.1/merchants/{}/members/{}",
+            merchant_code, member_id
+        ))?;
 
         let response = self
             .http_client
@@ -157,39 +112,16 @@ impl SumUpClient {
         }
     }
 
-    /// Updates a member for a specific merchant membership.
+    /// Deletes an identified member resource for a specific merchant.
     ///
     /// # Arguments
-    /// * `merchant_code` - The unique merchant code identifier
-    /// * `membership_id` - The unique membership identifier
-    /// * `member_id` - The unique member identifier
-    /// * `body` - The member details to update
-    pub async fn update_merchant_member(&self, merchant_code: &str, membership_id: &str, member_id: &str, body: &UpdateMemberRequest) -> Result<Member> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/memberships/{}/members/{}", merchant_code, membership_id, member_id))?;
-
-        let response = self
-            .http_client
-            .put(url)
-            .bearer_auth(&self.api_key)
-            .json(body)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let member = response.json::<Member>().await?;
-            Ok(member)
-        } else {
-            self.handle_error(response).await
-        }
-    }
-
-    /// Deletes an identified member resource.
-    ///
-    /// # Arguments
-    /// * `membership_id` - The unique membership identifier
-    /// * `member_id` - The unique member identifier
-    pub async fn delete_member(&self, membership_id: &str, member_id: &str) -> Result<()> {
-        let url = self.build_url(&format!("/v0.1/memberships/{}/members/{}", membership_id, member_id))?;
+    /// * `merchant_code` - The unique merchant code identifier.
+    /// * `member_id` - The unique member identifier.
+    pub async fn delete_member(&self, merchant_code: &str, member_id: &str) -> Result<()> {
+        let url = self.build_url(&format!(
+            "/v0.1/merchants/{}/members/{}",
+            merchant_code, member_id
+        ))?;
 
         let response = self
             .http_client
@@ -204,27 +136,4 @@ impl SumUpClient {
             self.handle_error(response).await
         }
     }
-
-    /// Deletes a member for a specific merchant membership.
-    ///
-    /// # Arguments
-    /// * `merchant_code` - The unique merchant code identifier
-    /// * `membership_id` - The unique membership identifier
-    /// * `member_id` - The unique member identifier
-    pub async fn delete_merchant_member(&self, merchant_code: &str, membership_id: &str, member_id: &str) -> Result<()> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/memberships/{}/members/{}", merchant_code, membership_id, member_id))?;
-
-        let response = self
-            .http_client
-            .delete(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            Ok(())
-        } else {
-            self.handle_error(response).await
-        }
-    }
-} 
+}

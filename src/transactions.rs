@@ -1,4 +1,18 @@
-use crate::{SumUpClient, Result, Transaction, TransactionHistoryResponse};
+use crate::{Result, SumUpClient, Transaction, TransactionHistoryResponse};
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct TransactionHistoryQuery<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub newest_time: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub oldest_time: Option<&'a str>,
+    // Add other query parameters as needed
+}
 
 impl SumUpClient {
     /// Lists detailed history of all transactions associated with the merchant profile.
@@ -6,33 +20,24 @@ impl SumUpClient {
     ///
     /// # Arguments
     /// * `merchant_code` - The merchant's unique code.
-    /// * `limit` - The maximum number of transactions to return.
-    /// * `order` - Sort order (e.g., "asc", "desc").
-    /// * `newest_time` - The timestamp of the newest transaction to start from.
+    /// * `query` - A struct with query parameters for filtering and pagination.
     pub async fn list_transactions_history(
         &self,
         merchant_code: &str,
-        limit: Option<i32>,
-        order: Option<&str>,
-        newest_time: Option<&str>,
+        query: &TransactionHistoryQuery<'_>,
     ) -> Result<TransactionHistoryResponse> {
-        let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions/history", merchant_code))?;
+        let url = self.build_url(&format!(
+            "/v2.1/merchants/{}/transactions/history",
+            merchant_code
+        ))?;
 
-        { // Scoped to release the mutable borrow on url
-            let mut query_pairs = url.query_pairs_mut();
-            if let Some(l) = limit {
-                query_pairs.append_pair("limit", &l.to_string());
-            }
-            if let Some(o) = order {
-                query_pairs.append_pair("order", o);
-            }
-            if let Some(nt) = newest_time {
-                query_pairs.append_pair("newest_time", nt);
-            }
-            // Add other query parameters here as needed...
-        }
-
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .query(query)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let history = response.json::<TransactionHistoryResponse>().await?;
@@ -56,7 +61,12 @@ impl SumUpClient {
         let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code))?;
         url.query_pairs_mut().append_pair("id", transaction_id);
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let transaction = response.json::<Transaction>().await?;
@@ -80,12 +90,21 @@ impl SumUpClient {
         amount: Option<f64>,
         reason: &str,
     ) -> Result<Transaction> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/transactions/{}/refunds", merchant_code, transaction_id))?;
+        let url = self.build_url(&format!(
+            "/v0.1/merchants/{}/transactions/{}/refunds",
+            merchant_code, transaction_id
+        ))?;
 
         let mut body = serde_json::Map::new();
-        body.insert("reason".to_string(), serde_json::Value::String(reason.to_string()));
+        body.insert(
+            "reason".to_string(),
+            serde_json::Value::String(reason.to_string()),
+        );
         if let Some(amt) = amount {
-            body.insert("amount".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(amt).unwrap()));
+            body.insert(
+                "amount".to_string(),
+                serde_json::Value::Number(serde_json::Number::from_f64(amt).unwrap()),
+            );
         }
 
         let response = self
@@ -121,12 +140,18 @@ impl SumUpClient {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use sumup_rs::SumUpClient;
+    /// use sumup_rs::{SumUpClient, TransactionHistoryQuery};
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// let history = client.list_transactions_history("merchant123", Some(10), Some("desc"), None).await?;
-    /// 
+    /// let query = TransactionHistoryQuery {
+    ///     limit: Some(10),
+    ///     order: Some("desc"),
+    ///     newest_time: None,
+    ///     oldest_time: None,
+    /// };
+    /// let history = client.list_transactions_history("merchant123", &query).await?;
+    ///
     /// if let Some(next_url) = SumUpClient::get_next_page_url_from_history(&history) {
     ///     println!("Next page available at: {}", next_url);
     /// } else {
@@ -136,7 +161,9 @@ impl SumUpClient {
     /// # }
     /// ```
     pub fn get_next_page_url_from_history(history: &TransactionHistoryResponse) -> Option<String> {
-        history.links.iter()
+        history
+            .links
+            .iter()
             .find(|link| link.rel == "next")
             .map(|link| link.href.clone())
     }
@@ -154,12 +181,18 @@ impl SumUpClient {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use sumup_rs::SumUpClient;
+    /// use sumup_rs::{SumUpClient, TransactionHistoryQuery};
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// let history = client.list_transactions_history("merchant123", Some(10), Some("desc"), None).await?;
-    /// 
+    /// let query = TransactionHistoryQuery {
+    ///     limit: Some(10),
+    ///     order: Some("desc"),
+    ///     newest_time: None,
+    ///     oldest_time: None,
+    /// };
+    /// let history = client.list_transactions_history("merchant123", &query).await?;
+    ///
     /// if let Some(prev_url) = SumUpClient::get_previous_page_url_from_history(&history) {
     ///     println!("Previous page available at: {}", prev_url);
     /// } else {
@@ -168,8 +201,12 @@ impl SumUpClient {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get_previous_page_url_from_history(history: &TransactionHistoryResponse) -> Option<String> {
-        history.links.iter()
+    pub fn get_previous_page_url_from_history(
+        history: &TransactionHistoryResponse,
+    ) -> Option<String> {
+        history
+            .links
+            .iter()
             .find(|link| link.rel == "prev")
             .map(|link| link.href.clone())
     }
@@ -186,12 +223,18 @@ impl SumUpClient {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use sumup_rs::SumUpClient;
+    /// use sumup_rs::{SumUpClient, TransactionHistoryQuery};
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// let history = client.list_transactions_history("merchant123", Some(10), Some("desc"), None).await?;
-    /// 
+    /// let query = TransactionHistoryQuery {
+    ///     limit: Some(10),
+    ///     order: Some("desc"),
+    ///     newest_time: None,
+    ///     oldest_time: None,
+    /// };
+    /// let history = client.list_transactions_history("merchant123", &query).await?;
+    ///
     /// if SumUpClient::has_next_page_from_history(&history) {
     ///     println!("More pages available");
     /// } else {
@@ -222,11 +265,11 @@ impl SumUpClient {
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// 
+    ///
     /// // Fetch all transactions (up to 5 pages to avoid overwhelming the API)
     /// let all_transactions = client.list_all_transactions_history("merchant123", Some("desc"), Some(5)).await?;
     /// println!("Fetched {} transactions", all_transactions.len());
-    /// 
+    ///
     /// // Fetch all transactions without page limit (use with caution)
     /// let all_transactions = client.list_all_transactions_history("merchant123", Some("desc"), None).await?;
     /// println!("Fetched {} transactions", all_transactions.len());
@@ -252,19 +295,24 @@ impl SumUpClient {
             }
 
             // Fetch the current page
-            let history = self.list_transactions_history(
-                merchant_code,
-                Some(100), // Use a reasonable page size
-                order,
-                newest_time.as_deref(),
-            ).await?;
+            let history = self
+                .list_transactions_history(
+                    merchant_code,
+                    &TransactionHistoryQuery {
+                        limit: Some(100), // Use a reasonable page size
+                        order,
+                        newest_time: newest_time.as_deref(),
+                        oldest_time: None, // No oldest_time for this convenience method
+                    },
+                )
+                .await?;
 
             // Check if there are more pages before moving data
             let has_next_page = Self::has_next_page_from_history(&history);
-            
+
             // Get the newest time from the last transaction for the next page
             let last_transaction = history.items.last().map(|t| t.timestamp.clone());
-            
+
             // Add transactions from this page
             all_transactions.extend(history.items);
 
@@ -285,4 +333,4 @@ impl SumUpClient {
 
         Ok(all_transactions)
     }
-} 
+}

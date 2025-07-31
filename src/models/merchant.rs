@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 use super::customer::Address;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Merchant {
@@ -46,4 +46,4 @@ pub struct DoingBusinessAs {
     pub name: String,
     pub website: Option<String>,
     pub address: Address,
-} 
+}

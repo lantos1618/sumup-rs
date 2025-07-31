@@ -1,4 +1,6 @@
-use crate::{SumUpClient, Result, Customer, CreateCustomerRequest, UpdateCustomerRequest, PaymentInstrument};
+use crate::{
+    CreateCustomerRequest, Customer, PaymentInstrument, Result, SumUpClient, UpdateCustomerRequest,
+};
 
 impl SumUpClient {
     /// Creates a new saved customer resource.
@@ -31,7 +33,12 @@ impl SumUpClient {
     pub async fn retrieve_customer(&self, customer_id: &str) -> Result<Customer> {
         let url = self.build_url(&format!("/v0.1/customers/{}", customer_id))?;
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let customer = response.json::<Customer>().await?;
@@ -46,7 +53,11 @@ impl SumUpClient {
     /// # Arguments
     /// * `customer_id` - The unique ID of the customer.
     /// * `body` - The customer details to update.
-    pub async fn update_customer(&self, customer_id: &str, body: &UpdateCustomerRequest) -> Result<Customer> {
+    pub async fn update_customer(
+        &self,
+        customer_id: &str,
+        body: &UpdateCustomerRequest,
+    ) -> Result<Customer> {
         let url = self.build_url(&format!("/v0.1/customers/{}", customer_id))?;
 
         let response = self
@@ -69,10 +80,21 @@ impl SumUpClient {
     ///
     /// # Arguments
     /// * `customer_id` - The unique ID of the customer.
-    pub async fn list_customer_payment_instruments(&self, customer_id: &str) -> Result<Vec<PaymentInstrument>> {
-        let url = self.build_url(&format!("/v0.1/customers/{}/payment-instruments", customer_id))?;
+    pub async fn list_customer_payment_instruments(
+        &self,
+        customer_id: &str,
+    ) -> Result<Vec<PaymentInstrument>> {
+        let url = self.build_url(&format!(
+            "/v0.1/customers/{}/payment-instruments",
+            customer_id
+        ))?;
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let instruments = response.json::<Vec<PaymentInstrument>>().await?;
@@ -88,8 +110,15 @@ impl SumUpClient {
     /// # Arguments
     /// * `customer_id` - The unique ID of the customer.
     /// * `token` - The token of the payment instrument to deactivate.
-    pub async fn deactivate_customer_payment_instrument(&self, customer_id: &str, token: &str) -> Result<()> {
-        let url = self.build_url(&format!("/v0.1/customers/{}/payment-instruments/{}", customer_id, token))?;
+    pub async fn deactivate_customer_payment_instrument(
+        &self,
+        customer_id: &str,
+        token: &str,
+    ) -> Result<()> {
+        let url = self.build_url(&format!(
+            "/v0.1/customers/{}/payment-instruments/{}",
+            customer_id, token
+        ))?;
 
         let response = self
             .http_client
@@ -104,4 +133,4 @@ impl SumUpClient {
             self.handle_error(response).await
         }
     }
-} 
+}

@@ -1,4 +1,4 @@
-use crate::{SumUpClient, Result, Merchant, MerchantProfile, MerchantProfileDetails};
+use crate::{Merchant, MerchantProfile, MerchantProfileDetails, Result, SumUpClient};
 
 impl SumUpClient {
     /// Retrieves the authenticated merchant's profile.
@@ -45,25 +45,12 @@ impl SumUpClient {
         }
     }
 
-    /// Lists all merchants accessible to the authenticated user.
+    /// Lists all merchant accounts the authenticated user is a member of.
+    /// This is the correct way to "list merchants" according to the API spec.
     ///
-    /// This endpoint returns all merchants that the authenticated user has access to.
-    /// This is typically used for users who manage multiple merchant accounts.
-    pub async fn list_merchants(&self) -> Result<Vec<Merchant>> {
-        let url = self.build_url("/v0.1/me/merchants")?;
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let merchants = response.json::<Vec<Merchant>>().await?;
-            Ok(merchants)
-        } else {
-            self.handle_error(response).await
-        }
+    /// Note: This uses the memberships endpoint as the API doesn't have a direct
+    /// "list merchants" endpoint. The memberships contain merchant information.
+    pub async fn list_merchants(&self) -> Result<Vec<crate::Membership>> {
+        self.list_memberships().await
     }
-} 
+}

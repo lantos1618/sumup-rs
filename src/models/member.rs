@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
@@ -19,8 +19,8 @@ pub struct Member {
     pub id: String,
     pub membership_id: String,
     pub user: User,
-    pub status: String, // ACTIVE, INACTIVE, PENDING
-    pub roles: Vec<String>, // Role IDs or names
+    pub status: String,           // ACTIVE, INACTIVE, PENDING
+    pub roles: Vec<String>,       // Role IDs or names
     pub permissions: Vec<String>, // Permission strings
     pub created_at: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -51,4 +51,4 @@ pub struct UpdateMemberRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberListResponse {
     pub members: Vec<Member>,
-} 
+}

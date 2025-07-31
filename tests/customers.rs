@@ -1,7 +1,6 @@
-use sumup_rs::{SumUpClient, CreateCustomerRequest, PersonalDetails, Address};
-use wiremock::{MockServer, Mock, ResponseTemplate};
-use wiremock::matchers::{method, path, body_json, header};
-use chrono;
+use sumup_rs::{Address, CreateCustomerRequest, PersonalDetails, SumUpClient};
+use wiremock::matchers::{body_json, header, method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_create_customer_success() {
@@ -63,22 +62,26 @@ async fn test_create_customer_success() {
         .await;
 
     // 3. Act: Create a client pointing to the mock server and call the function
-    let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
     let result = client.create_customer(&request_body).await;
 
     // 4. Assert: Check if the result is what we expect
     assert!(result.is_ok());
     let customer = result.unwrap();
     assert_eq!(customer.customer_id, "cust_12345");
-    
+
     let personal_details = customer.personal_details.unwrap();
     assert_eq!(personal_details.first_name, Some("John".to_string()));
     assert_eq!(personal_details.last_name, Some("Doe".to_string()));
-    assert_eq!(personal_details.email, Some("john.doe@example.com".to_string()));
+    assert_eq!(
+        personal_details.email,
+        Some("john.doe@example.com".to_string())
+    );
     assert_eq!(personal_details.phone, Some("+1234567890".to_string()));
     assert_eq!(personal_details.birth_date, Some("1990-01-01".to_string()));
     assert_eq!(personal_details.tax_id, Some("123456789".to_string()));
-    
+
     let address = personal_details.address.unwrap();
     assert_eq!(address.city, Some("New York".to_string()));
     assert_eq!(address.country, Some("US".to_string()));
@@ -106,14 +109,12 @@ async fn test_create_customer_minimal() {
         .and(path("/v0.1/customers"))
         .and(header("Authorization", "Bearer test-api-key"))
         .and(body_json(&request_body))
-        .respond_with(
-            ResponseTemplate::new(201)
-                .set_body_json(&response_body)
-        )
+        .respond_with(ResponseTemplate::new(201).set_body_json(&response_body))
         .mount(&mock_server)
         .await;
 
-    let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
     let result = client.create_customer(&request_body).await;
 
     assert!(result.is_ok());
@@ -141,14 +142,12 @@ async fn test_create_customer_api_error() {
     Mock::given(method("POST"))
         .and(path("/v0.1/customers"))
         .and(header("Authorization", "Bearer test-api-key"))
-        .respond_with(
-            ResponseTemplate::new(400)
-                .set_body_json(&error_response)
-        )
+        .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
         .mount(&mock_server)
         .await;
 
-    let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
     let result = client.create_customer(&request_body).await;
 
     assert!(result.is_err());
@@ -159,17 +158,17 @@ async fn test_create_customer_api_error() {
 async fn test_create_customer_with_real_api() {
     // Load environment variables from .env.local
     dotenv::from_filename(".env.local").ok();
-    
+
     // Get API key from environment
     let api_key = std::env::var("SUMUP_API_SECRET_KEY")
         .expect("SUMUP_API_SECRET_KEY environment variable must be set");
-    
+
     // Create a client with the real API (use sandbox for testing)
     let client = SumUpClient::new(api_key, true).expect("Failed to create SumUp client");
-    
+
     // Create a unique customer ID using timestamp
     let customer_id = format!("test-cust-{}", chrono::Utc::now().timestamp());
-    
+
     let request_body = CreateCustomerRequest {
         customer_id: customer_id.clone(),
         personal_details: Some(PersonalDetails {
@@ -192,17 +191,20 @@ async fn test_create_customer_with_real_api() {
 
     // Test creating a customer with the real API
     let result = client.create_customer(&request_body).await;
-    
+
     // This might succeed or fail depending on the API key and sandbox status
     match result {
         Ok(customer) => {
             println!("✅ Successfully created customer: {}", customer.customer_id);
             assert_eq!(customer.customer_id, customer_id);
-            
+
             let personal_details = customer.personal_details.unwrap();
             assert_eq!(personal_details.first_name, Some("Test".to_string()));
             assert_eq!(personal_details.last_name, Some("Customer".to_string()));
-            assert_eq!(personal_details.email, Some("test.customer@example.com".to_string()));
+            assert_eq!(
+                personal_details.email,
+                Some("test.customer@example.com".to_string())
+            );
         }
         Err(e) => {
             println!("❌ Failed to create customer with real API: {}", e);

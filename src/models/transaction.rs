@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::common::Link;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionHistoryResponse {
@@ -34,4 +34,4 @@ pub struct Transaction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub internal_id: Option<i64>,
     // ... add other fields from the transaction object as needed
-} 
+}
