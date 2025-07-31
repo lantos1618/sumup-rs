@@ -1,8 +1,8 @@
-use crate::{SumUpClient, Result, MembershipListResponse};
+use crate::{SumUpClient, Result, Membership, MembershipListResponse};
 
 impl SumUpClient {
     /// Lists all memberships for the authenticated user.
-    pub async fn list_memberships(&self) -> Result<MembershipListResponse> {
+    pub async fn list_memberships(&self) -> Result<Vec<Membership>> {
         let url = self.build_url("/v0.1/memberships")?;
 
         let response = self
@@ -13,8 +13,8 @@ impl SumUpClient {
             .await?;
 
         if response.status().is_success() {
-            let memberships = response.json::<MembershipListResponse>().await?;
-            Ok(memberships)
+            let memberships_response = response.json::<MembershipListResponse>().await?;
+            Ok(memberships_response.items)
         } else {
             self.handle_error(response).await
         }

@@ -161,14 +161,47 @@ impl SumUpClient {
             .send()
             .await?;
 
-        match response.status().as_u16() {
+        let status = response.status().as_u16();
+        println!("🔍 Response status: {}", status);
+
+        match status {
             200 => {
-                let checkout = response.json::<Checkout>().await?;
-                Ok(ProcessCheckoutResponse::Success(checkout))
+                // Get response text first for debugging
+                let response_text = response.text().await.unwrap_or_default();
+                println!("🔍 200 Response body: {}", response_text);
+                
+                // Check if this looks like a 3DS response (has next_step)
+                if response_text.contains("next_step") {
+                    // Try to parse as CheckoutAccepted (3DS response)
+                    match serde_json::from_str::<crate::CheckoutAccepted>(&response_text) {
+                        Ok(accepted) => Ok(ProcessCheckoutResponse::Accepted(accepted)),
+                        Err(e) => {
+                            println!("🔍 Failed to parse 3DS response: {}", e);
+                            Err(crate::Error::Json(e))
+                        }
+                    }
+                } else {
+                    // Try to parse as Checkout
+                    match serde_json::from_str::<Checkout>(&response_text) {
+                        Ok(checkout) => Ok(ProcessCheckoutResponse::Success(checkout)),
+                        Err(e) => {
+                            println!("🔍 Failed to parse as Checkout: {}", e);
+                            Err(crate::Error::Json(e))
+                        }
+                    }
+                }
             },
             202 => {
-                let accepted = response.json::<crate::CheckoutAccepted>().await?;
-                Ok(ProcessCheckoutResponse::Accepted(accepted))
+                let response_text = response.text().await.unwrap_or_default();
+                println!("🔍 202 Response body: {}", response_text);
+                
+                match serde_json::from_str::<crate::CheckoutAccepted>(&response_text) {
+                    Ok(accepted) => Ok(ProcessCheckoutResponse::Accepted(accepted)),
+                    Err(e) => {
+                        println!("🔍 Failed to parse 202 response: {}", e);
+                        Err(crate::Error::Json(e))
+                    }
+                }
             },
             _ => self.handle_error(response).await
         }
