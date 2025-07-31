@@ -31,9 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Step 1: List existing memberships
     println!("\n1. Listing existing memberships...");
     let memberships_response = client.list_memberships().await?;
-    println!("✅ Found {} memberships:", memberships_response.memberships.len());
-    for membership in &memberships_response.memberships {
-        println!("   - {} (ID: {})", membership.name, membership.id);
+    println!("✅ Found {} memberships:", memberships_response.len());
+    for membership in &memberships_response {
+        println!("   - {} (ID: {})", membership.resource_id, membership.id);
     }
     
     // Step 2: Create a custom role

@@ -140,49 +140,50 @@ async fn test_list_merchants_success() {
     let mock_server = MockServer::start().await;
     let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
-    let response_body = serde_json::json!([
-        {
-            "merchant_code": "merchant_1",
-            "name": "First Merchant",
-            "email": "first@test.com",
-            "phone": "+1111111111",
-            "address": {
-                "line_1": "111 First St",
-                "line_2": null,
-                "city": "First City",
-                "state": null,
-                "postal_code": "11111",
-                "country": "US"
+    let response_body = serde_json::json!({
+        "items": [
+            {
+                "id": "membership_1",
+                "resource_id": "merchant_1",
+                "type": "merchant",
+                "roles": ["owner"],
+                "permissions": ["read", "write"],
+                "created_at": "2023-01-01T00:00:00Z",
+                "updated_at": "2023-01-01T00:00:00Z",
+                "status": "active",
+                "resource": {
+                    "id": "merchant_1",
+                    "type": "merchant",
+                    "name": "First Merchant",
+                    "logo": null,
+                    "created_at": "2023-01-01T00:00:00Z",
+                    "updated_at": "2023-01-01T00:00:00Z"
+                }
             },
-            "country": "US",
-            "currency": "USD",
-            "timezone": "America/New_York",
-            "created_at": "2023-01-01T00:00:00Z",
-            "updated_at": "2023-01-01T00:00:00Z"
-        },
-        {
-            "merchant_code": "merchant_2",
-            "name": "Second Merchant",
-            "email": "second@test.com",
-            "phone": "+2222222222",
-            "address": {
-                "line_1": "222 Second St",
-                "line_2": null,
-                "city": "Second City",
-                "state": null,
-                "postal_code": "22222",
-                "country": "CA"
-            },
-            "country": "CA",
-            "currency": "CAD",
-            "timezone": "America/Toronto",
-            "created_at": "2023-01-01T00:00:00Z",
-            "updated_at": "2023-01-01T00:00:00Z"
-        }
-    ]);
+            {
+                "id": "membership_2",
+                "resource_id": "merchant_2",
+                "type": "merchant",
+                "roles": ["member"],
+                "permissions": ["read"],
+                "created_at": "2023-01-01T00:00:00Z",
+                "updated_at": "2023-01-01T00:00:00Z",
+                "status": "active",
+                "resource": {
+                    "id": "merchant_2",
+                    "type": "merchant",
+                    "name": "Second Merchant",
+                    "logo": null,
+                    "created_at": "2023-01-01T00:00:00Z",
+                    "updated_at": "2023-01-01T00:00:00Z"
+                }
+            }
+        ],
+        "total_count": 2
+    });
 
     Mock::given(method("GET"))
-        .and(path("/v0.1/me/merchants"))
+        .and(path("/v0.1/memberships"))
         .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
         .mount(&mock_server)
         .await;
@@ -192,12 +193,12 @@ async fn test_list_merchants_success() {
 
     // Assert
     assert!(result.is_ok());
-    let merchants = result.unwrap();
-    assert_eq!(merchants.len(), 2);
-    assert_eq!(merchants[0].merchant_code, "merchant_1");
-    assert_eq!(merchants[0].name, "First Merchant");
-    assert_eq!(merchants[1].merchant_code, "merchant_2");
-    assert_eq!(merchants[1].name, "Second Merchant");
+    let memberships = result.unwrap();
+    assert_eq!(memberships.len(), 2);
+    assert_eq!(memberships[0].resource_id, "merchant_1");
+    assert_eq!(memberships[0].resource.name, "First Merchant");
+    assert_eq!(memberships[1].resource_id, "merchant_2");
+    assert_eq!(memberships[1].resource.name, "Second Merchant");
 }
 
 #[tokio::test]

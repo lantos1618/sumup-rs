@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(merchants) => {
             println!("✅ Found {} merchants:", merchants.len());
             for merchant in &merchants {
-                println!("   - {} ({})", merchant.name, merchant.merchant_code);
+                println!("   - {}", merchant.id);
             }
         }
         Err(e) => {

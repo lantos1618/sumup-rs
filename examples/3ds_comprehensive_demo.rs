@@ -69,7 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 number: card_number.to_string(),
                 expiry_month: "12".to_string(),
                 expiry_year: "2025".to_string(),
-                cvc: "123".to_string(),
+                cvv: "123".to_string(),
                 name: Some("3DS Test Customer".to_string()),
             }),
             token: None,
