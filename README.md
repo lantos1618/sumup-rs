@@ -158,6 +158,52 @@ let request = CreateCheckoutRequest {
 let checkout = client.create_checkout(&request).await?;
 ```
 
+### 3DS Payment Testing
+
+The library includes comprehensive examples for testing 3DS (3D Secure) authentication:
+
+```bash
+# Setup 3DS testing
+cargo run --example setup_3ds_testing
+
+# Basic 3DS demo (automated testing)
+cargo run --example 3ds_payment_demo
+
+# Comprehensive 3DS demo with webhook monitoring
+cargo run --example 3ds_comprehensive_demo
+
+# Manual 3DS testing (recommended for sandbox)
+cargo run --example 3ds_manual_test
+
+# Live 3DS testing with real cards (production)
+cargo run --example 3ds_live_interactive
+```
+
+#### 3DS Test Cards
+The examples use specific test cards designed to trigger 3DS authentication:
+- `4000000000003220` - Visa (3DS Authentication Required)
+- `4000000000009995` - Visa (3DS with Insufficient Funds)
+- `4000000000000002` - Visa (3DS Declined)
+- `4000000000009987` - Visa (3DS Lost Card)
+- `4000000000009979` - Visa (3DS Stolen Card)
+
+#### 3DS Testing Setup
+1. Get a webhook URL from [webhook.site](https://webhook.site)
+2. Update the `return_url` in the examples
+3. Run the demo and follow the 3DS authentication flow
+
+**Note**: Sandbox 3DS behavior may be limited. Real 3DS testing requires a production environment.
+
+#### Live 3DS Testing (Production)
+For testing with real cards in production:
+1. Run `cargo run --example 3ds_live_interactive`
+2. Confirm you want to proceed with a LIVE payment
+3. Enter your webhook URL from webhook.site
+4. Enter your payment amount
+5. Enter your real card details
+6. Complete 3DS authentication if required
+7. Monitor payment status in real-time
+
 ### Processing a Checkout
 
 ```rust
