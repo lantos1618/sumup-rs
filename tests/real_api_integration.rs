@@ -1,10 +1,10 @@
-use sumup_rs::{SumUpClient, CreateCustomerRequest, PersonalDetails, Address};
+use sumup_rs::{Address, CreateCustomerRequest, PersonalDetails, SumUpClient};
 
 #[tokio::test]
 async fn test_real_api_merchant_profile() {
     // Load environment variables from .env.local
     dotenv::from_filename(".env.local").ok();
-    
+
     let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
@@ -12,7 +12,7 @@ async fn test_real_api_merchant_profile() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -20,7 +20,7 @@ async fn test_real_api_merchant_profile() {
             return;
         }
     };
-    
+
     // Test merchant profile retrieval
     match client.get_merchant_profile().await {
         Ok(profile) => {
@@ -42,7 +42,7 @@ async fn test_real_api_merchant_profile() {
 #[tokio::test]
 async fn test_real_api_create_customer() {
     dotenv::from_filename(".env.local").ok();
-    
+
     let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
@@ -50,7 +50,7 @@ async fn test_real_api_create_customer() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -58,9 +58,9 @@ async fn test_real_api_create_customer() {
             return;
         }
     };
-    
+
     let customer_id = format!("test-cust-{}", chrono::Utc::now().timestamp());
-    
+
     let customer_request = CreateCustomerRequest {
         customer_id: customer_id.clone(),
         personal_details: Some(PersonalDetails {
@@ -80,7 +80,7 @@ async fn test_real_api_create_customer() {
             }),
         }),
     };
-    
+
     match client.create_customer(&customer_request).await {
         Ok(customer) => {
             assert_eq!(customer.customer_id, customer_id);
@@ -97,7 +97,7 @@ async fn test_real_api_create_customer() {
 #[tokio::test]
 async fn test_real_api_list_merchants() {
     dotenv::from_filename(".env.local").ok();
-    
+
     let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
         Ok(key) => key,
         Err(_) => {
@@ -105,7 +105,7 @@ async fn test_real_api_list_merchants() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -113,7 +113,7 @@ async fn test_real_api_list_merchants() {
             return;
         }
     };
-    
+
     match client.list_merchants().await {
         Ok(merchants) => {
             // Should return a list (might be empty)
@@ -123,4 +123,4 @@ async fn test_real_api_list_merchants() {
             println!("API test failed (expected with test key): {}", e);
         }
     }
-} 
+}

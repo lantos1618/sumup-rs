@@ -1,10 +1,12 @@
-use sumup_rs::{SumUpClient, CreateCheckoutRequest, ProcessCheckoutRequest, CardDetails, ProcessCheckoutResponse};
+use sumup_rs::{
+    CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, ProcessCheckoutResponse,
+    SumUpClient,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::from_filename(".env.local").ok();
-    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
-        .expect("SUMUP_API_SECRET_KEY must be set");
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY").expect("SUMUP_API_SECRET_KEY must be set");
 
     // Use sandbox=true for testing
     let client = SumUpClient::new(api_key, true)?;
@@ -13,7 +15,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Get merchant profile to use the correct merchant_code and currency
     println!("\n1. Fetching merchant profile...");
     let merchant_profile = client.get_merchant_profile().await?;
-    println!("   ✅ Found Merchant: {} ({})", merchant_profile.name, merchant_profile.merchant_code);
+    println!(
+        "   ✅ Found Merchant: {} ({})",
+        merchant_profile.name, merchant_profile.merchant_code
+    );
 
     // 2. Create a checkout
     println!("\n2. Creating a new checkout...");
@@ -50,20 +55,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         personal_details: None,
     };
 
-    match client.process_checkout(&checkout.id, &process_request).await {
+    match client
+        .process_checkout(&checkout.id, &process_request)
+        .await
+    {
         Ok(ProcessCheckoutResponse::Success(processed_checkout)) => {
             match processed_checkout.status.as_str() {
                 "PAID" => {
                     println!("   ✅ Payment successful!");
-                    println!("      Transaction ID: {}", processed_checkout.transaction_id.as_deref().unwrap_or("N/A"));
+                    println!(
+                        "      Transaction ID: {}",
+                        processed_checkout
+                            .transaction_id
+                            .as_deref()
+                            .unwrap_or("N/A")
+                    );
                 }
                 "FAILED" => {
                     println!("   ❌ Payment failed!");
                     println!("      Status: {}", processed_checkout.status);
                     if !processed_checkout.transactions.is_empty() {
-                        println!("      Transaction: {} - {}", 
+                        println!(
+                            "      Transaction: {} - {}",
                             processed_checkout.transactions[0].id,
-                            processed_checkout.transactions[0].status.as_deref().unwrap_or("Unknown"));
+                            processed_checkout.transactions[0]
+                                .status
+                                .as_deref()
+                                .unwrap_or("Unknown")
+                        );
                     }
                 }
                 "PENDING" => {
@@ -74,7 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("   ❓ Payment status: {}", processed_checkout.status);
                 }
             }
-            
+
             // Check if there's a redirect URL for 3DS
             if let Some(redirect_url) = &processed_checkout.redirect_url {
                 display_3ds_link(redirect_url, &checkout.id);
@@ -88,7 +107,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             eprintln!("   ❌ Payment processing failed: {}", e);
         }
     }
-    
+
     Ok(())
 }
 
@@ -112,4 +131,4 @@ fn display_3ds_link(redirect_url: &str, checkout_id: &str) {
     println!("https://checkout.sumup.com/{}", checkout_id);
     println!();
     println!("{}", "=".repeat(60));
-} 
+}

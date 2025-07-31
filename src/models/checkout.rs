@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
+use super::common::EmptyObject;
 use super::common::{CardDetails, Mandate, PaymentInstrumentToken};
 use super::customer::PersonalDetails;
 use super::transaction::Transaction;
-use super::common::EmptyObject;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Checkout {
@@ -151,4 +151,4 @@ pub struct NextStep {
     pub mechanism: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub payload: Option<serde_json::Value>,
-} 
+}

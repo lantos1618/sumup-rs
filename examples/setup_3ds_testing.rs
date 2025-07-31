@@ -4,7 +4,9 @@ fn main() {
     println!("🔧 3DS TESTING SETUP");
     println!("===================");
     println!();
-    println!("To properly test 3DS authentication, you need a webhook URL to capture return calls.");
+    println!(
+        "To properly test 3DS authentication, you need a webhook URL to capture return calls."
+    );
     println!();
     println!("📋 SETUP STEPS:");
     println!("1. Go to https://webhook.site");
@@ -29,8 +31,8 @@ fn main() {
     println!("🚀 TO RUN THE DEMO:");
     println!("   cargo run --example 3ds_payment_demo");
     println!();
-    
+
     print!("Press Enter to continue...");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut String::new()).unwrap();
-} 
+}

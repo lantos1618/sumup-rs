@@ -57,4 +57,4 @@ pub struct PaginatedResponse<T> {
     pub next_cursor: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prev_cursor: Option<String>,
-} 
+}

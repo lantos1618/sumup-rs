@@ -1,4 +1,7 @@
-use crate::{SumUpClient, Result, CreateCheckoutRequest, Checkout, ProcessCheckoutRequest, ProcessCheckoutResponse, DeletedCheckout, AvailablePaymentMethodsResponse, CheckoutListQuery};
+use crate::{
+    AvailablePaymentMethodsResponse, Checkout, CheckoutListQuery, CreateCheckoutRequest,
+    DeletedCheckout, ProcessCheckoutRequest, ProcessCheckoutResponse, Result, SumUpClient,
+};
 
 impl SumUpClient {
     /// Lists created checkout resources according to the applied checkout_reference.
@@ -13,11 +16,11 @@ impl SumUpClient {
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// 
+    ///
     /// // List all checkouts
     /// let checkouts = client.list_checkouts(None).await?;
     /// println!("Found {} checkouts", checkouts.len());
-    /// 
+    ///
     /// // List checkouts with specific reference
     /// let checkouts = client.list_checkouts(Some("order-123")).await?;
     /// println!("Found {} checkouts with reference 'order-123'", checkouts.len());
@@ -48,7 +51,7 @@ impl SumUpClient {
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// 
+    ///
     /// // Create a query to filter checkouts
     /// let query = CheckoutListQuery {
     ///     checkout_reference: Some("order-123".to_string()),
@@ -58,13 +61,16 @@ impl SumUpClient {
     ///     limit: Some(10),
     ///     offset: Some(0),
     /// };
-    /// 
+    ///
     /// let checkouts = client.list_checkouts_with_query(&query).await?;
     /// println!("Found {} checkouts matching criteria", checkouts.len());
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn list_checkouts_with_query(&self, query: &CheckoutListQuery) -> Result<Vec<Checkout>> {
+    pub async fn list_checkouts_with_query(
+        &self,
+        query: &CheckoutListQuery,
+    ) -> Result<Vec<Checkout>> {
         let mut url = self.build_url("/v0.1/checkouts")?;
 
         // Add query parameters
@@ -90,7 +96,12 @@ impl SumUpClient {
             }
         }
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let checkouts = response.json::<Vec<Checkout>>().await?;
@@ -130,7 +141,12 @@ impl SumUpClient {
     pub async fn retrieve_checkout(&self, checkout_id: &str) -> Result<Checkout> {
         let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let checkout = response.json::<Checkout>().await?;
@@ -169,7 +185,7 @@ impl SumUpClient {
                 // Get response text first for debugging
                 let response_text = response.text().await.unwrap_or_default();
                 println!("🔍 200 Response body: {}", response_text);
-                
+
                 // Check if this looks like a 3DS response (has next_step)
                 if response_text.contains("next_step") {
                     // Try to parse as CheckoutAccepted (3DS response)
@@ -190,11 +206,11 @@ impl SumUpClient {
                         }
                     }
                 }
-            },
+            }
             202 => {
                 let response_text = response.text().await.unwrap_or_default();
                 println!("🔍 202 Response body: {}", response_text);
-                
+
                 match serde_json::from_str::<crate::CheckoutAccepted>(&response_text) {
                     Ok(accepted) => Ok(ProcessCheckoutResponse::Accepted(accepted)),
                     Err(e) => {
@@ -202,8 +218,8 @@ impl SumUpClient {
                         Err(crate::Error::Json(e))
                     }
                 }
-            },
-            _ => self.handle_error(response).await
+            }
+            _ => self.handle_error(response).await,
         }
     }
 
@@ -241,7 +257,10 @@ impl SumUpClient {
         amount: Option<f64>,
         currency: Option<&str>,
     ) -> Result<AvailablePaymentMethodsResponse> {
-        let mut url = self.build_url(&format!("/v0.1/merchants/{}/payment-methods", merchant_code))?;
+        let mut url = self.build_url(&format!(
+            "/v0.1/merchants/{}/payment-methods",
+            merchant_code
+        ))?;
 
         {
             let mut query_pairs = url.query_pairs_mut();
@@ -253,7 +272,12 @@ impl SumUpClient {
             }
         }
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let methods = response.json::<AvailablePaymentMethodsResponse>().await?;
@@ -266,9 +290,9 @@ impl SumUpClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::{SumUpClient, CreateCheckoutRequest};
-    use wiremock::{MockServer, Mock, ResponseTemplate};
-    use wiremock::matchers::{method, path, body_json, header};
+    use crate::{CreateCheckoutRequest, SumUpClient};
+    use wiremock::matchers::{body_json, header, method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
     async fn test_create_checkout_success() {
@@ -308,13 +332,14 @@ mod tests {
             .and(body_json(&request_body))
             .respond_with(
                 ResponseTemplate::new(201) // 201 Created
-                    .set_body_json(&response_body)
+                    .set_body_json(&response_body),
             )
             .mount(&mock_server)
             .await;
 
         // 3. Act: Create a client pointing to the mock server and call the function
-        let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+        let client =
+            SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
         let result = client.create_checkout(&request_body).await;
 
         // 4. Assert: Check if the result is what we expect
@@ -351,13 +376,14 @@ mod tests {
             .and(header("Authorization", "Bearer test-api-key"))
             .respond_with(
                 ResponseTemplate::new(200) // 200 OK
-                    .set_body_json(&response_body)
+                    .set_body_json(&response_body),
             )
             .mount(&mock_server)
             .await;
 
         // 3. Act: Create a client pointing to the mock server and call the function
-        let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+        let client =
+            SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
         let result = client.retrieve_checkout(checkout_id).await;
 
         // 4. Assert: Check if the result is what we expect
@@ -367,4 +393,4 @@ mod tests {
         assert_eq!(checkout.status, "PENDING");
         assert_eq!(checkout.amount, 10.50);
     }
-} 
+}

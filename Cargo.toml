@@ -2,11 +2,15 @@
 name = "sumup-rs"
 version = "0.2.0"
 edition = "2021"
-description = "A comprehensive Rust client for the SumUp API"
+description = "A comprehensive, type-safe Rust client for the SumUp API with full async/await support"
 license = "MIT"
 repository = "https://github.com/yourusername/sumup-rs"
-keywords = ["sumup", "api", "payment", "fintech"]
-categories = ["api-bindings", "web-programming"]
+documentation = "https://docs.rs/sumup-rs"
+readme = "README.md"
+keywords = ["sumup", "api", "payment", "fintech", "3ds", "checkout", "merchant"]
+categories = ["api-bindings", "web-programming", "asynchronous"]
+authors = ["Your Name <your.email@example.com>"]
+homepage = "https://github.com/yourusername/sumup-rs"
 
 [dependencies]
 reqwest = { version = "0.12", features = ["json"] }

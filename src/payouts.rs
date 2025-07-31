@@ -1,4 +1,4 @@
-use crate::{SumUpClient, Result, Payout, PayoutListResponse};
+use crate::{Payout, PayoutListResponse, Result, SumUpClient};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
@@ -16,10 +16,13 @@ impl SumUpClient {
     ///
     /// # Arguments
     /// * `query` - Query parameters including required start_date and end_date
-    /// 
+    ///
     /// Note: This endpoint requires a merchant_code. Use list_merchant_payouts instead.
     /// The /v1.0/me/payouts endpoint does not exist in the SumUp API.
-    #[deprecated(since = "0.2.0", note = "Use list_merchant_payouts instead. The /me/payouts endpoint does not exist.")]
+    #[deprecated(
+        since = "0.2.0",
+        note = "Use list_merchant_payouts instead. The /me/payouts endpoint does not exist."
+    )]
     pub async fn list_payouts(&self, _query: &PayoutListQuery) -> Result<PayoutListResponse> {
         Err(crate::Error::ApiError {
             status: 404,
@@ -41,7 +44,11 @@ impl SumUpClient {
     /// # Arguments
     /// * `merchant_code` - The unique merchant code identifier
     /// * `query` - Query parameters including required start_date and end_date
-    pub async fn list_merchant_payouts(&self, merchant_code: &str, query: &PayoutListQuery) -> Result<PayoutListResponse> {
+    pub async fn list_merchant_payouts(
+        &self,
+        merchant_code: &str,
+        query: &PayoutListQuery,
+    ) -> Result<PayoutListResponse> {
         let url = self.build_url(&format!("/v1.0/merchants/{}/payouts", merchant_code))?;
 
         let response = self
@@ -67,7 +74,12 @@ impl SumUpClient {
     pub async fn retrieve_payout(&self, payout_id: &str) -> Result<Payout> {
         let url = self.build_url(&format!("/v1.0/me/payouts/{}", payout_id))?;
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let payout = response.json::<Payout>().await?;
@@ -82,10 +94,22 @@ impl SumUpClient {
     /// # Arguments
     /// * `merchant_code` - The unique merchant code identifier
     /// * `payout_id` - The unique payout identifier
-    pub async fn retrieve_merchant_payout(&self, merchant_code: &str, payout_id: &str) -> Result<Payout> {
-        let url = self.build_url(&format!("/v1.0/merchants/{}/payouts/{}", merchant_code, payout_id))?;
+    pub async fn retrieve_merchant_payout(
+        &self,
+        merchant_code: &str,
+        payout_id: &str,
+    ) -> Result<Payout> {
+        let url = self.build_url(&format!(
+            "/v1.0/merchants/{}/payouts/{}",
+            merchant_code, payout_id
+        ))?;
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let payout = response.json::<Payout>().await?;
@@ -94,4 +118,4 @@ impl SumUpClient {
             self.handle_error(response).await
         }
     }
-} 
+}

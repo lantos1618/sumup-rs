@@ -1,12 +1,13 @@
-use sumup_rs::{SumUpClient, CreateRoleRequest, CreateMemberRequest, Role, Member, Membership};
-use wiremock::{MockServer, Mock, ResponseTemplate};
+use sumup_rs::{CreateMemberRequest, CreateRoleRequest, Member, Membership, Role, SumUpClient};
 use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_create_role_success() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let expected_role = Role {
         id: "role_123".to_string(),
@@ -55,7 +56,8 @@ async fn test_create_role_success() {
 async fn test_create_member_success() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let expected_member = Member {
         id: "member_123".to_string(),
@@ -125,7 +127,8 @@ async fn test_create_member_success() {
 async fn test_list_payouts_success() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let response_body = serde_json::json!({
         "payouts": [
@@ -176,7 +179,8 @@ async fn test_list_payouts_success() {
 async fn test_create_reader_checkout_success() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let expected_checkout = sumup_rs::ReaderCheckoutResponse {
         id: "checkout_123".to_string(),
@@ -243,4 +247,4 @@ async fn test_create_reader_checkout_success() {
     assert_eq!(checkout.total_amount.value, 29.99);
     assert_eq!(checkout.total_amount.currency, "EUR");
     assert_eq!(checkout.status, "PENDING");
-} 
+}

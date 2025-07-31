@@ -1,12 +1,13 @@
-use sumup_rs::{SumUpClient, MerchantProfile, MerchantProfileDetails, DoingBusinessAs};
-use wiremock::{MockServer, Mock, ResponseTemplate};
+use sumup_rs::{DoingBusinessAs, MerchantProfile, MerchantProfileDetails, SumUpClient};
 use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_get_merchant_profile_success() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let _expected_profile = MerchantProfile {
         merchant_profile: MerchantProfileDetails {
@@ -86,7 +87,10 @@ async fn test_get_merchant_profile_success() {
     let profile = result.unwrap();
     assert_eq!(profile.merchant_code, "merchant_123");
     assert_eq!(profile.name, "Test Merchant");
-    assert_eq!(profile.doing_business_as.as_ref().unwrap().email, "merchant@test.com");
+    assert_eq!(
+        profile.doing_business_as.as_ref().unwrap().email,
+        "merchant@test.com"
+    );
     assert_eq!(profile.currency, "USD");
 }
 
@@ -94,7 +98,8 @@ async fn test_get_merchant_profile_success() {
 async fn test_get_merchant_success() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let response_body = serde_json::json!({
         "merchant_code": "merchant_456",
@@ -138,7 +143,8 @@ async fn test_get_merchant_success() {
 async fn test_list_merchants_success() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let response_body = serde_json::json!({
         "items": [
@@ -205,7 +211,8 @@ async fn test_list_merchants_success() {
 async fn test_get_merchant_profile_error() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let error_response = serde_json::json!({
         "error_code": "unauthorized",
@@ -237,7 +244,8 @@ async fn test_get_merchant_profile_error() {
 async fn test_get_merchant_not_found() {
     // Arrange
     let mock_server = MockServer::start().await;
-    let client = SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
+    let client =
+        SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let error_response = serde_json::json!({
         "error_code": "not_found",
@@ -263,4 +271,4 @@ async fn test_get_merchant_not_found() {
         }
         _ => panic!("Expected ApiError, got {:?}", error),
     }
-} 
+}

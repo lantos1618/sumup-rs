@@ -1,0 +1,55 @@
+# Clippy configuration for consistent linting
+# Documentation: https://rust-lang.github.io/rust-clippy/master/
+
+# Allow some common patterns that might be false positives
+allow = [
+    "clippy::too_many_arguments",      # API methods often need many parameters
+    "clippy::type_complexity",         # API types can be complex
+    "clippy::module_name_repetitions", # Common in API client modules
+    "clippy::missing_errors_doc",      # Not all errors need documentation
+    "clippy::missing_panics_doc",      # Not all functions can panic
+    "clippy::must_use_candidate",      # Some functions are meant to be used for side effects
+    "clippy::return_self_not_must_use", # Builder patterns don't need must_use
+    "clippy::similar_names",           # API field names can be similar
+    "clippy::struct_excessive_bools",  # API models often have many boolean flags
+    "clippy::too_many_lines",          # Some functions need to be long for API handling
+    "clippy::unnecessary_wraps",       # Some wraps are necessary for API compatibility
+    "clippy::use_self",                # Sometimes explicit type names are clearer
+    "clippy::wildcard_imports",        # Re-exports often use wildcards
+]
+
+# Deny some important lints
+deny = [
+    "clippy::unwrap_used",             # Prefer proper error handling
+    "clippy::expect_used",             # Prefer proper error handling
+    "clippy::panic",                   # No panics in library code
+    "clippy::unimplemented",           # Implement missing functionality
+    "clippy::todo",                    # Remove todos before release
+    "clippy::unreachable",             # Handle all code paths
+    "clippy::unused_async",            # Remove unused async
+    "clippy::unused_self",             # Remove unused self parameters
+    "clippy::unused_unit",             # Remove unused unit returns
+    "clippy::useless_attribute",       # Remove useless attributes
+    "clippy::useless_conversion",      # Remove useless conversions
+    "clippy::useless_format",          # Remove useless format calls
+    "clippy::useless_let_if_seq",      # Simplify let-if sequences
+    "clippy::useless_transmute",       # Remove useless transmutes
+    "clippy::useless_vec",             # Remove useless vec allocations
+    "clippy::verbose_bit_mask",        # Simplify bit masks
+    "clippy::wrong_self_convention",   # Use correct self conventions
+]
+
+# Warn about some important issues
+warn = [
+    "clippy::all",                     # Enable all lints by default
+]
+
+# Specific configurations
+[msrv]
+msrv = "1.70.0"  # Minimum supported Rust version
+
+# Documentation
+[docs]
+missing_docs = "warn"
+missing_docs_private = "warn"
+missing_docs_public = "warn" 

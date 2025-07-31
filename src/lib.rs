@@ -8,14 +8,14 @@ pub use models::*;
 // Declare modules for API endpoints
 pub mod checkouts;
 pub mod customers;
-pub mod transactions;
+pub mod members;
+pub mod memberships;
 pub mod merchant;
 pub mod payouts;
-pub mod receipts;
 pub mod readers;
-pub mod memberships;
-pub mod members;
+pub mod receipts;
 pub mod roles;
+pub mod transactions;
 
 // Re-export query types for convenience
 pub use transactions::TransactionHistoryQuery;
@@ -73,7 +73,9 @@ impl std::fmt::Display for Error {
             Error::ApiError { status, body } => {
                 // Try to provide the most useful error message
                 let status_str = status.to_string();
-                let message = body.detail.as_ref()
+                let message = body
+                    .detail
+                    .as_ref()
                     .or(body.message.as_ref())
                     .or(body.title.as_ref())
                     .unwrap_or(&status_str);
@@ -136,10 +138,10 @@ impl SumUpClient {
     /// Helper function to handle API error responses.
     pub(crate) async fn handle_error<T>(&self, response: reqwest::Response) -> Result<T> {
         let status = response.status().as_u16();
-        
+
         // Get the response text first
         let response_text = response.text().await.unwrap_or_default();
-        
+
         // Try to parse the error response as structured JSON
         let body = match serde_json::from_str::<ApiErrorBody>(&response_text) {
             Ok(parsed_body) => parsed_body,
@@ -157,7 +159,7 @@ impl SumUpClient {
                 }
             }
         };
-        
+
         Err(Error::ApiError { status, body })
     }
 

@@ -1,4 +1,4 @@
-use sumup_rs::{SumUpClient, CreateCheckoutRequest};
+use sumup_rs::{CreateCheckoutRequest, SumUpClient};
 
 #[tokio::test]
 async fn test_create_checkout_integration() {
@@ -10,7 +10,7 @@ async fn test_create_checkout_integration() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -18,7 +18,7 @@ async fn test_create_checkout_integration() {
             return;
         }
     };
-    
+
     // Test creating a checkout
     let checkout_request = CreateCheckoutRequest {
         checkout_reference: format!("test-checkout-{}", chrono::Utc::now().timestamp()),
@@ -31,10 +31,13 @@ async fn test_create_checkout_integration() {
         purpose: None,
         redirect_url: None,
     };
-    
+
     match client.create_checkout(&checkout_request).await {
         Ok(checkout) => {
-            assert_eq!(checkout.checkout_reference, Some(checkout_request.checkout_reference.clone()));
+            assert_eq!(
+                checkout.checkout_reference,
+                Some(checkout_request.checkout_reference.clone())
+            );
             assert_eq!(checkout.amount, checkout_request.amount);
             assert_eq!(checkout.currency, checkout_request.currency);
             assert!(!checkout.id.is_empty());
@@ -55,7 +58,7 @@ async fn test_retrieve_checkout_integration() {
             return;
         }
     };
-    
+
     let client = match SumUpClient::new(api_key, true) {
         Ok(client) => client,
         Err(_) => {
@@ -63,7 +66,7 @@ async fn test_retrieve_checkout_integration() {
             return;
         }
     };
-    
+
     // Try to retrieve a non-existent checkout (should fail gracefully)
     match client.retrieve_checkout("non-existent-checkout-id").await {
         Ok(_) => {
@@ -75,4 +78,4 @@ async fn test_retrieve_checkout_integration() {
             println!("Expected error for non-existent checkout: {}", e);
         }
     }
-} 
+}

@@ -2,6 +2,24 @@
 
 A comprehensive, type-safe Rust client for the SumUp API. This library provides a complete interface to all SumUp API endpoints with full async/await support.
 
+## 🚀 Development Status
+
+**✅ Production Ready**: This library is fully implemented and production-ready for core payment operations. All critical APIs are working with comprehensive error handling and type safety.
+
+### ✅ **Fully Implemented & Tested**
+- **Core Payment APIs**: Checkouts, transactions, customers, merchants
+- **3DS Support**: Proper handling of 3DS authentication flows
+- **Error Handling**: Comprehensive error management with structured error types
+- **Type Safety**: Full Rust type definitions for all request/response models
+- **Testing**: Complete test suite with wiremock integration
+
+### ⚠️ **Limited Functionality**
+- **Team Management**: Only memberships listing is implemented (other endpoints don't exist in SumUp API)
+- **Financial APIs**: Payouts and receipts have limited endpoints (merchant-specific only)
+- **Hardware APIs**: Reader management requires merchant codes
+
+For detailed implementation status, see [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md).
+
 ## Features
 
 - **Complete API Coverage**: All SumUp API endpoints are supported, including payments, customers, transactions, and team management.
@@ -160,9 +178,54 @@ For sandbox environments, manual testing is often more reliable:
 cargo run --example working_checkout_demo
 ```
 
+## 🔧 Development & CI/CD
+
+This project uses automated CI/CD to ensure code quality and reliability:
+
+### **Continuous Integration**
+- **Automated Testing**: All tests run on every push and pull request
+- **Code Quality**: Formatting and linting checks ensure consistent code style
+- **Security Audits**: Automated vulnerability scanning with `cargo audit`
+- **Documentation**: Automatic documentation generation and validation
+
+### **Automated Deployment**
+- **Release Publishing**: Automatic publishing to Crates.io on GitHub releases
+- **Version Management**: Tagged releases trigger the deployment pipeline
+- **Quality Gates**: Only passes tests and security checks are deployed
+
+### **Local Development**
+```bash
+# Run all quality checks locally (recommended)
+./scripts/check.sh
+
+# Or run individual checks
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-features
+cargo audit
+```
+
+## 📦 Publishing
+
+This crate is automatically published to [Crates.io](https://crates.io/crates/sumup-rs) when:
+1. A new GitHub release is created
+2. All CI/CD checks pass
+3. Security audit is clean
+
+For detailed publishing information, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### **Development Workflow**
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run the quality checks locally
+5. Submit a pull request
+
+The CI/CD pipeline will automatically validate your changes.
 
 ## License
 

@@ -1,14 +1,9 @@
 use sumup_rs::{
-    SumUpClient, 
-    CreateCheckoutRequest, 
-    ProcessCheckoutRequest, 
-    ProcessCheckoutResponse,
-    CardDetails,
-    PersonalDetails,
-    Address
+    Address, CardDetails, CreateCheckoutRequest, PersonalDetails, ProcessCheckoutRequest,
+    ProcessCheckoutResponse, SumUpClient,
 };
-use wiremock::{MockServer, Mock, ResponseTemplate};
-use wiremock::matchers::{method, path, body_json, header};
+use wiremock::matchers::{body_json, header, method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use chrono;
 
@@ -47,10 +42,7 @@ async fn test_process_checkout_with_mock_card_success() {
         .and(path("/v0.1/checkouts"))
         .and(header("Authorization", "Bearer test-api-key"))
         .and(body_json(&checkout_request))
-        .respond_with(
-            ResponseTemplate::new(201)
-                .set_body_json(&checkout_response)
-        )
+        .respond_with(ResponseTemplate::new(201).set_body_json(&checkout_response))
         .mount(&mock_server)
         .await;
 
@@ -98,22 +90,22 @@ async fn test_process_checkout_with_mock_card_success() {
         .and(path("/v0.1/checkouts/checkout-12345"))
         .and(header("Authorization", "Bearer test-api-key"))
         .and(body_json(&process_request))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .set_body_json(&processed_response)
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(&processed_response))
         .mount(&mock_server)
         .await;
 
     // 2. Act: Create client and process payment
-    let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
-    
+    let client =
+        SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+
     // First create the checkout
     let checkout = client.create_checkout(&checkout_request).await.unwrap();
     assert_eq!(checkout.status, "PENDING");
-    
+
     // Then process the payment
-    let result = client.process_checkout(&checkout.id, &process_request).await;
+    let result = client
+        .process_checkout(&checkout.id, &process_request)
+        .await;
 
     // 3. Assert: Check if the payment was processed successfully
     assert!(result.is_ok());
@@ -124,7 +116,10 @@ async fn test_process_checkout_with_mock_card_success() {
             assert_eq!(checkout.transaction_id, Some("txn-67890".to_string()));
             assert_eq!(checkout.transaction_code, Some("TXN123".to_string()));
             assert!(!checkout.transactions.is_empty());
-            assert_eq!(checkout.transactions[0].status, Some("SUCCESSFUL".to_string()));
+            assert_eq!(
+                checkout.transactions[0].status,
+                Some("SUCCESSFUL".to_string())
+            );
         }
         ProcessCheckoutResponse::Accepted(_) => {
             panic!("Expected success response, got accepted response");
@@ -165,10 +160,7 @@ async fn test_process_checkout_with_mock_card_declined() {
         .and(path("/v0.1/checkouts"))
         .and(header("Authorization", "Bearer test-api-key"))
         .and(body_json(&checkout_request))
-        .respond_with(
-            ResponseTemplate::new(201)
-                .set_body_json(&checkout_response)
-        )
+        .respond_with(ResponseTemplate::new(201).set_body_json(&checkout_response))
         .mount(&mock_server)
         .await;
 
@@ -198,17 +190,17 @@ async fn test_process_checkout_with_mock_card_declined() {
         .and(path("/v0.1/checkouts/checkout-declined"))
         .and(header("Authorization", "Bearer test-api-key"))
         .and(body_json(&process_request))
-        .respond_with(
-            ResponseTemplate::new(400)
-                .set_body_json(&error_response)
-        )
+        .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
         .mount(&mock_server)
         .await;
 
-    let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
-    
+    let client =
+        SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+
     let checkout = client.create_checkout(&checkout_request).await.unwrap();
-    let result = client.process_checkout(&checkout.id, &process_request).await;
+    let result = client
+        .process_checkout(&checkout.id, &process_request)
+        .await;
 
     // Should fail with card declined error
     assert!(result.is_err());
@@ -253,10 +245,7 @@ async fn test_process_checkout_with_customer_details() {
         .and(path("/v0.1/checkouts"))
         .and(header("Authorization", "Bearer test-api-key"))
         .and(body_json(&checkout_request))
-        .respond_with(
-            ResponseTemplate::new(201)
-                .set_body_json(&checkout_response)
-        )
+        .respond_with(ResponseTemplate::new(201).set_body_json(&checkout_response))
         .mount(&mock_server)
         .await;
 
@@ -320,17 +309,17 @@ async fn test_process_checkout_with_customer_details() {
         .and(path("/v0.1/checkouts/checkout-customer"))
         .and(header("Authorization", "Bearer test-api-key"))
         .and(body_json(&process_request))
-        .respond_with(
-            ResponseTemplate::new(200)
-                .set_body_json(&processed_response)
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(&processed_response))
         .mount(&mock_server)
         .await;
 
-    let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
-    
+    let client =
+        SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+
     let checkout = client.create_checkout(&checkout_request).await.unwrap();
-    let result = client.process_checkout(&checkout.id, &process_request).await;
+    let result = client
+        .process_checkout(&checkout.id, &process_request)
+        .await;
 
     assert!(result.is_ok());
     let processed_checkout = result.unwrap();
@@ -338,7 +327,10 @@ async fn test_process_checkout_with_customer_details() {
         ProcessCheckoutResponse::Success(checkout) => {
             assert_eq!(checkout.status, "PAID");
             assert_eq!(checkout.customer_id, Some("cust-123".to_string()));
-            assert_eq!(checkout.transaction_id, Some("txn-customer-123".to_string()));
+            assert_eq!(
+                checkout.transaction_id,
+                Some("txn-customer-123".to_string())
+            );
         }
         ProcessCheckoutResponse::Accepted(_) => {
             panic!("Expected success response, got accepted response");
@@ -350,15 +342,15 @@ async fn test_process_checkout_with_customer_details() {
 async fn test_process_checkout_with_real_api() {
     // Test with real API using your API key
     dotenv::from_filename(".env.local").ok();
-    
+
     let api_key = std::env::var("SUMUP_API_SECRET_KEY")
         .expect("SUMUP_API_SECRET_KEY environment variable must be set");
-    
+
     let client = SumUpClient::new(api_key, true).expect("Failed to create SumUp client");
-    
+
     // Create a unique checkout reference
     let checkout_reference = format!("test-payment-{}", chrono::Utc::now().timestamp());
-    
+
     let checkout_request = CreateCheckoutRequest {
         checkout_reference: checkout_reference.clone(),
         amount: 10.00,
@@ -373,13 +365,16 @@ async fn test_process_checkout_with_real_api() {
 
     // Create the checkout
     let result = client.create_checkout(&checkout_request).await;
-    
+
     match result {
         Ok(checkout) => {
             println!("✅ Successfully created checkout: {}", checkout.id);
-            assert_eq!(checkout.checkout_reference, Some(checkout_reference.clone()));
+            assert_eq!(
+                checkout.checkout_reference,
+                Some(checkout_reference.clone())
+            );
             assert_eq!(checkout.status, "PENDING");
-            
+
             // Now try to process the payment with mock card data
             let process_request = ProcessCheckoutRequest {
                 payment_type: "card".to_string(),
@@ -395,18 +390,26 @@ async fn test_process_checkout_with_real_api() {
                 customer_id: None,
                 personal_details: None,
             };
-            
-            let payment_result = client.process_checkout(&checkout.id, &process_request).await;
-            
+
+            let payment_result = client
+                .process_checkout(&checkout.id, &process_request)
+                .await;
+
             match payment_result {
                 Ok(ProcessCheckoutResponse::Success(processed_checkout)) => {
                     println!("✅ Successfully processed payment!");
                     println!("   Status: {}", processed_checkout.status);
                     println!("   Transaction ID: {:?}", processed_checkout.transaction_id);
-                    println!("   Transaction Code: {:?}", processed_checkout.transaction_code);
-                    
+                    println!(
+                        "   Transaction Code: {:?}",
+                        processed_checkout.transaction_code
+                    );
+
                     // The payment should be successful with mock card
-                    assert!(processed_checkout.status == "PAID" || processed_checkout.status == "SUCCESSFUL");
+                    assert!(
+                        processed_checkout.status == "PAID"
+                            || processed_checkout.status == "SUCCESSFUL"
+                    );
                 }
                 Ok(ProcessCheckoutResponse::Accepted(accepted)) => {
                     println!("✅ Payment accepted - 3DS authentication required!");
@@ -441,9 +444,9 @@ async fn test_different_mock_card_types() {
 
     for (card_number, description) in mock_cards {
         println!("Testing {}: {}", card_number, description);
-        
+
         let mock_server = MockServer::start().await;
-        
+
         let checkout_request = CreateCheckoutRequest {
             checkout_reference: format!("test-{}", card_number),
             amount: 10.00,
@@ -472,10 +475,7 @@ async fn test_different_mock_card_types() {
             .and(path("/v0.1/checkouts"))
             .and(header("Authorization", "Bearer test-api-key"))
             .and(body_json(&checkout_request))
-            .respond_with(
-                ResponseTemplate::new(201)
-                    .set_body_json(&checkout_response)
-            )
+            .respond_with(ResponseTemplate::new(201).set_body_json(&checkout_response))
             .mount(&mock_server)
             .await;
 
@@ -496,7 +496,7 @@ async fn test_different_mock_card_types() {
 
         // Determine expected response based on card number
         let is_success = card_number == "4242424242424242" || card_number == "5555555555554444";
-        
+
         if is_success {
             let success_response = serde_json::json!({
                 "id": format!("checkout-{}", card_number),
@@ -525,10 +525,7 @@ async fn test_different_mock_card_types() {
                 .and(path(format!("/v0.1/checkouts/checkout-{}", card_number)))
                 .and(header("Authorization", "Bearer test-api-key"))
                 .and(body_json(&process_request))
-                .respond_with(
-                    ResponseTemplate::new(200)
-                        .set_body_json(&success_response)
-                )
+                .respond_with(ResponseTemplate::new(200).set_body_json(&success_response))
                 .mount(&mock_server)
                 .await;
         } else {
@@ -542,18 +539,18 @@ async fn test_different_mock_card_types() {
                 .and(path(format!("/v0.1/checkouts/checkout-{}", card_number)))
                 .and(header("Authorization", "Bearer test-api-key"))
                 .and(body_json(&process_request))
-                .respond_with(
-                    ResponseTemplate::new(400)
-                        .set_body_json(&error_response)
-                )
+                .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
                 .mount(&mock_server)
                 .await;
         }
 
-        let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
-        
+        let client =
+            SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
+
         let checkout = client.create_checkout(&checkout_request).await.unwrap();
-        let result = client.process_checkout(&checkout.id, &process_request).await;
+        let result = client
+            .process_checkout(&checkout.id, &process_request)
+            .await;
 
         if is_success {
             assert!(result.is_ok(), "Expected success for card {}", card_number);
@@ -570,4 +567,4 @@ async fn test_different_mock_card_types() {
             assert!(result.is_err(), "Expected error for card {}", card_number);
         }
     }
-} 
+}

@@ -1,4 +1,4 @@
-use crate::{SumUpClient, Result, Role, CreateRoleRequest, UpdateRoleRequest, RoleListResponse};
+use crate::{CreateRoleRequest, Result, Role, RoleListResponse, SumUpClient, UpdateRoleRequest};
 
 impl SumUpClient {
     /// Lists all roles for a specific merchant.
@@ -53,9 +53,17 @@ impl SumUpClient {
     /// * `merchant_code` - The unique merchant code identifier.
     /// * `role_id` - The unique role identifier.
     pub async fn retrieve_role(&self, merchant_code: &str, role_id: &str) -> Result<Role> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/roles/{}", merchant_code, role_id))?;
+        let url = self.build_url(&format!(
+            "/v0.1/merchants/{}/roles/{}",
+            merchant_code, role_id
+        ))?;
 
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
 
         if response.status().is_success() {
             let role = response.json::<Role>().await?;
@@ -71,8 +79,16 @@ impl SumUpClient {
     /// * `merchant_code` - The unique merchant code identifier.
     /// * `role_id` - The unique role identifier.
     /// * `body` - The role details to update.
-    pub async fn update_role(&self, merchant_code: &str, role_id: &str, body: &UpdateRoleRequest) -> Result<Role> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/roles/{}", merchant_code, role_id))?;
+    pub async fn update_role(
+        &self,
+        merchant_code: &str,
+        role_id: &str,
+        body: &UpdateRoleRequest,
+    ) -> Result<Role> {
+        let url = self.build_url(&format!(
+            "/v0.1/merchants/{}/roles/{}",
+            merchant_code, role_id
+        ))?;
 
         let response = self
             .http_client
@@ -96,7 +112,10 @@ impl SumUpClient {
     /// * `merchant_code` - The unique merchant code identifier.
     /// * `role_id` - The unique role identifier.
     pub async fn delete_role(&self, merchant_code: &str, role_id: &str) -> Result<()> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/roles/{}", merchant_code, role_id))?;
+        let url = self.build_url(&format!(
+            "/v0.1/merchants/{}/roles/{}",
+            merchant_code, role_id
+        ))?;
 
         let response = self
             .http_client
@@ -111,4 +130,4 @@ impl SumUpClient {
             self.handle_error(response).await
         }
     }
-} 
+}

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Receipt {
@@ -17,4 +17,4 @@ pub struct Receipt {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReceiptListResponse {
     pub receipts: Vec<Receipt>,
-} 
+}

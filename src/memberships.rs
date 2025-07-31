@@ -1,4 +1,4 @@
-use crate::{SumUpClient, Result, Membership, MembershipListResponse};
+use crate::{Membership, MembershipListResponse, Result, SumUpClient};
 
 impl SumUpClient {
     /// Lists all memberships for the authenticated user.
@@ -22,4 +22,4 @@ impl SumUpClient {
     // Note: The SumUp API does not currently have endpoints for creating, updating, or deleting memberships directly.
     // These actions are typically handled within the SumUp dashboard.
     // The placeholder functions below are retained in case the API is extended in the future.
-} 
+}

@@ -1,4 +1,4 @@
-use crate::{SumUpClient, Result, Merchant, MerchantProfile, MerchantProfileDetails};
+use crate::{Merchant, MerchantProfile, MerchantProfileDetails, Result, SumUpClient};
 
 impl SumUpClient {
     /// Retrieves the authenticated merchant's profile.
@@ -47,10 +47,10 @@ impl SumUpClient {
 
     /// Lists all merchant accounts the authenticated user is a member of.
     /// This is the correct way to "list merchants" according to the API spec.
-    /// 
+    ///
     /// Note: This uses the memberships endpoint as the API doesn't have a direct
     /// "list merchants" endpoint. The memberships contain merchant information.
     pub async fn list_merchants(&self) -> Result<Vec<crate::Membership>> {
         self.list_memberships().await
     }
-} 
+}
