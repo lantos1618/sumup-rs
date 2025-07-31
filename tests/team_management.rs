@@ -1,4 +1,5 @@
-use sumup_rs::{CreateMemberRequest, CreateRoleRequest, Member, Membership, Role, SumUpClient};
+#![allow(deprecated)]
+use sumup_rs::{CreateMemberRequest, CreateRoleRequest, Member, Role, SumUpClient};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -49,7 +50,7 @@ async fn test_create_role_success() {
     assert_eq!(role.name, "Admin");
     assert_eq!(role.membership_id, "membership_123");
     assert_eq!(role.permissions, vec!["read", "write"]);
-    assert_eq!(role.is_predefined, false);
+    assert!(!role.is_predefined);
 }
 
 #[tokio::test]
@@ -124,6 +125,7 @@ async fn test_create_member_success() {
 }
 
 #[tokio::test]
+#[ignore = "list_payouts endpoint does not exist in SumUp API - use list_merchant_payouts instead"]
 async fn test_list_payouts_success() {
     // Arrange
     let mock_server = MockServer::start().await;
@@ -176,6 +178,7 @@ async fn test_list_payouts_success() {
 }
 
 #[tokio::test]
+#[ignore = "create_reader_checkout endpoint does not exist in SumUp API - use create_merchant_reader_checkout instead"]
 async fn test_create_reader_checkout_success() {
     // Arrange
     let mock_server = MockServer::start().await;

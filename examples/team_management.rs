@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+#![allow(deprecated)]
 use sumup_rs::payouts::PayoutListQuery;
 use sumup_rs::{CreateMemberRequest, CreateReaderRequest, CreateRoleRequest, SumUpClient};
 

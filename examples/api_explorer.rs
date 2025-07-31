@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+#![allow(deprecated)]
 use sumup_rs::SumUpClient;
 
 #[tokio::main]

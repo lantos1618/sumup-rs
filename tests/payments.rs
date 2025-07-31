@@ -5,8 +5,6 @@ use sumup_rs::{
 use wiremock::matchers::{body_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use chrono;
-
 #[tokio::test]
 async fn test_process_checkout_with_mock_card_success() {
     // 1. Arrange: Start a mock server

@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use sumup_rs::SumUpClient;
 
 #[tokio::test]

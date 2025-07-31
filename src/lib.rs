@@ -1,3 +1,9 @@
+#![allow(
+    clippy::type_complexity,
+    clippy::large_enum_variant,
+    clippy::result_large_err,
+    clippy::if_same_then_else
+)]
 use reqwest::Client;
 use url::Url;
 

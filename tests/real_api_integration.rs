@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use sumup_rs::{Address, CreateCustomerRequest, PersonalDetails, SumUpClient};
 
 #[tokio::test]

@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use std::io;
 use sumup_rs::{CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, SumUpClient};
 

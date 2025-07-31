@@ -140,11 +140,17 @@ impl SumUpClient {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use sumup_rs::SumUpClient;
+    /// use sumup_rs::{SumUpClient, TransactionHistoryQuery};
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// let history = client.list_transactions_history("merchant123", Some(10), Some("desc"), None).await?;
+    /// let query = TransactionHistoryQuery {
+    ///     limit: Some(10),
+    ///     order: Some("desc"),
+    ///     newest_time: None,
+    ///     oldest_time: None,
+    /// };
+    /// let history = client.list_transactions_history("merchant123", &query).await?;
     ///
     /// if let Some(next_url) = SumUpClient::get_next_page_url_from_history(&history) {
     ///     println!("Next page available at: {}", next_url);
@@ -175,11 +181,17 @@ impl SumUpClient {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use sumup_rs::SumUpClient;
+    /// use sumup_rs::{SumUpClient, TransactionHistoryQuery};
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// let history = client.list_transactions_history("merchant123", Some(10), Some("desc"), None).await?;
+    /// let query = TransactionHistoryQuery {
+    ///     limit: Some(10),
+    ///     order: Some("desc"),
+    ///     newest_time: None,
+    ///     oldest_time: None,
+    /// };
+    /// let history = client.list_transactions_history("merchant123", &query).await?;
     ///
     /// if let Some(prev_url) = SumUpClient::get_previous_page_url_from_history(&history) {
     ///     println!("Previous page available at: {}", prev_url);
@@ -211,11 +223,17 @@ impl SumUpClient {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use sumup_rs::SumUpClient;
+    /// use sumup_rs::{SumUpClient, TransactionHistoryQuery};
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = SumUpClient::new("your-api-key".to_string(), true)?;
-    /// let history = client.list_transactions_history("merchant123", Some(10), Some("desc"), None).await?;
+    /// let query = TransactionHistoryQuery {
+    ///     limit: Some(10),
+    ///     order: Some("desc"),
+    ///     newest_time: None,
+    ///     oldest_time: None,
+    /// };
+    /// let history = client.list_transactions_history("merchant123", &query).await?;
     ///
     /// if SumUpClient::has_next_page_from_history(&history) {
     ///     println!("More pages available");

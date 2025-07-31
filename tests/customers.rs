@@ -1,4 +1,3 @@
-use chrono;
 use sumup_rs::{Address, CreateCustomerRequest, PersonalDetails, SumUpClient};
 use wiremock::matchers::{body_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};

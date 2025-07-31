@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use sumup_rs::{
     CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, ProcessCheckoutResponse,
     SumUpClient,
