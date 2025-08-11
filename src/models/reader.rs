@@ -38,9 +38,9 @@ pub struct UpdateReaderRequest {
 // Reader Checkout specific models (different from online checkout)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TotalAmount {
-    pub value: f64,
+    pub value: u32,
     pub currency: String,
-    pub minor_unit: i32,
+    pub minor_unit: u8,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,28 +50,14 @@ pub struct CreateReaderCheckoutRequest {
     pub return_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub installments: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub customer_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub external_reference: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReaderCheckoutResponse {
-    pub id: String,
-    pub status: String, // PENDING, COMPLETED, FAILED, CANCELLED
-    pub total_amount: TotalAmount,
-    pub description: String,
-    pub return_url: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub installments: Option<i32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub customer_id: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub external_reference: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub transaction_id: Option<String>,
-    pub created_at: DateTime<Utc>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub completed_at: Option<DateTime<Utc>>,
+    pub data: ReaderCheckoutResponseData,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReaderCheckoutResponseData {
+    pub client_transaction_id: String,
 }
