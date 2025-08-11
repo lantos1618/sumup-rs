@@ -11,6 +11,10 @@ pub struct TransactionHistoryQuery<'a> {
     pub newest_time: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub oldest_time: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "status[]"))]
+    pub status: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "payment_type[]"))]
+    pub payment_type: Option<&'a str>,
     // Add other query parameters as needed
 }
 
@@ -333,6 +337,8 @@ impl SumUpClient {
                         order,
                         newest_time: newest_time.as_deref(),
                         oldest_time: None, // No oldest_time for this convenience method
+                        status: None,
+                        payment_type: None,
                     },
                 )
                 .await?;
