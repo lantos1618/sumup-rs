@@ -11,6 +11,10 @@ pub struct TransactionHistoryQuery<'a> {
     pub newest_time: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub oldest_time: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "status[]"))]
+    pub status: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "payment_type[]"))]
+    pub payment_type: Option<&'a str>,
     // Add other query parameters as needed
 }
 
@@ -60,6 +64,36 @@ impl SumUpClient {
     ) -> Result<Transaction> {
         let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code))?;
         url.query_pairs_mut().append_pair("id", transaction_id);
+
+        let response = self
+            .http_client
+            .get(url)
+            .bearer_auth(&self.api_key)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let transaction = response.json::<Transaction>().await?;
+            Ok(transaction)
+        } else {
+            self.handle_error(response).await
+        }
+    }
+
+    /// Retrieves the full details of an identified transaction by client
+    /// transaction id, e.g. as returned by a CreateReaderCheckout request.
+    /// Uses the modern v2.1 endpoint.
+    ///
+    /// # Arguments
+    /// * `merchant_code` - The merchant's unique code.
+    /// * `client_transaction_id` - The transaction's unique ID.
+    pub async fn retrieve_transaction_by_client_transaction_id(
+        &self,
+        merchant_code: &str,
+        client_transaction_id: &str,
+    ) -> Result<Transaction> {
+        let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code))?;
+        url.query_pairs_mut().append_pair("client_transaction_id", client_transaction_id);
 
         let response = self
             .http_client
@@ -303,6 +337,8 @@ impl SumUpClient {
                         order,
                         newest_time: newest_time.as_deref(),
                         oldest_time: None, // No oldest_time for this convenience method
+                        status: None,
+                        payment_type: None,
                     },
                 )
                 .await?;
