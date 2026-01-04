@@ -34,13 +34,11 @@ pub struct Address {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub country: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub line_1: Option<String>,
+    pub address_line1: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub line_2: Option<String>,
+    pub address_line2: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub postal_code: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub state: Option<String>,
+    pub post_code: Option<String>,
 }
 
 // NOTE: The API requires a customer_id in the body when creating a customer.
