@@ -145,30 +145,44 @@ impl SumUpClient {
         Ok(self.base_url.join(path)?)
     }
 
+    /// Handle response - parse JSON on success, error on failure.
+    pub(crate) async fn handle_response<T: serde::de::DeserializeOwned>(
+        &self,
+        response: reqwest::Response,
+    ) -> Result<T> {
+        if response.status().is_success() {
+            Ok(response.json::<T>().await?)
+        } else {
+            self.handle_error(response).await
+        }
+    }
+
+    /// Handle response that returns no body (204 No Content, etc).
+    pub(crate) async fn handle_empty_response(&self, response: reqwest::Response) -> Result<()> {
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            self.handle_error(response).await
+        }
+    }
+
     /// Helper function to handle API error responses.
     pub(crate) async fn handle_error<T>(&self, response: reqwest::Response) -> Result<T> {
         let status = response.status().as_u16();
-
-        // Get the response text first
         let response_text = response.text().await.unwrap_or_default();
 
-        // Try to parse the error response as structured JSON
-        let body = match serde_json::from_str::<ApiErrorBody>(&response_text) {
-            Ok(parsed_body) => parsed_body,
-            Err(_) => {
-                // Fall back to plain text if JSON parsing fails
-                ApiErrorBody {
-                    error_type: None,
-                    title: None,
-                    status: Some(status),
-                    detail: Some(response_text),
-                    error_code: None,
-                    message: None,
-                    param: None,
-                    additional_fields: std::collections::HashMap::new(),
-                }
+        let body = serde_json::from_str::<ApiErrorBody>(&response_text).unwrap_or_else(|_| {
+            ApiErrorBody {
+                error_type: None,
+                title: None,
+                status: Some(status),
+                detail: Some(response_text),
+                error_code: None,
+                message: None,
+                param: None,
+                additional_fields: std::collections::HashMap::new(),
             }
-        };
+        });
 
         Err(Error::ApiError { status, body })
     }

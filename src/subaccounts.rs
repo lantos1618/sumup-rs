@@ -51,96 +51,35 @@ impl SumUpClient {
     /// Lists all operators (subaccounts).
     pub async fn list_operators(&self) -> Result<Vec<Operator>> {
         let url = self.build_url("/v0.1/subaccounts")?;
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            Ok(response.json::<Vec<Operator>>().await?)
-        } else {
-            self.handle_error(response).await
-        }
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        self.handle_response(response).await
     }
 
     /// Creates a new operator (subaccount).
     pub async fn create_operator(&self, body: &CreateOperatorRequest) -> Result<Operator> {
         let url = self.build_url("/v0.1/subaccounts")?;
-
-        let response = self
-            .http_client
-            .post(url)
-            .bearer_auth(&self.api_key)
-            .json(body)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            Ok(response.json::<Operator>().await?)
-        } else {
-            self.handle_error(response).await
-        }
+        let response = self.http_client.post(url).bearer_auth(&self.api_key).json(body).send().await?;
+        self.handle_response(response).await
     }
 
     /// Retrieves an operator by ID.
     pub async fn retrieve_operator(&self, operator_id: &str) -> Result<Operator> {
         let url = self.build_url(&format!("/v0.1/subaccounts/{}", operator_id))?;
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            Ok(response.json::<Operator>().await?)
-        } else {
-            self.handle_error(response).await
-        }
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        self.handle_response(response).await
     }
 
     /// Updates an operator.
-    pub async fn update_operator(
-        &self,
-        operator_id: &str,
-        body: &UpdateOperatorRequest,
-    ) -> Result<Operator> {
+    pub async fn update_operator(&self, operator_id: &str, body: &UpdateOperatorRequest) -> Result<Operator> {
         let url = self.build_url(&format!("/v0.1/subaccounts/{}", operator_id))?;
-
-        let response = self
-            .http_client
-            .patch(url)
-            .bearer_auth(&self.api_key)
-            .json(body)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            Ok(response.json::<Operator>().await?)
-        } else {
-            self.handle_error(response).await
-        }
+        let response = self.http_client.patch(url).bearer_auth(&self.api_key).json(body).send().await?;
+        self.handle_response(response).await
     }
 
     /// Disables an operator.
     pub async fn disable_operator(&self, operator_id: &str) -> Result<()> {
         let url = self.build_url(&format!("/v0.1/subaccounts/{}", operator_id))?;
-
-        let response = self
-            .http_client
-            .delete(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            Ok(())
-        } else {
-            self.handle_error(response).await
-        }
+        let response = self.http_client.delete(url).bearer_auth(&self.api_key).send().await?;
+        self.handle_empty_response(response).await
     }
 }
