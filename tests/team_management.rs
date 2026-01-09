@@ -1,4 +1,4 @@
-use sumup_rs::{CreateMemberRequest, CreateRoleRequest, Member, Role, SumUpClient};
+use sumup_rs::{CreateMemberRequest, CreateRoleRequest, Role, SumUpClient};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 

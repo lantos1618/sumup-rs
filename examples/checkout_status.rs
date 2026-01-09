@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("   - ID: {}", transaction.id);
                     println!(
                         "     Status: {}",
-                        transaction.status.as_deref().unwrap_or("Unknown")
+                        transaction.status.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "Unknown".to_string())
                     );
                     println!(
                         "     Amount: {} {}",

@@ -172,7 +172,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         transaction.id,
                         transaction.amount,
                         transaction.currency,
-                        transaction.status.as_deref().unwrap_or("N/A")
+                        transaction.status.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "N/A".to_string())
                     );
                 }
             }
@@ -202,7 +202,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("   Amount: {} {}", transaction.amount, transaction.currency);
                 println!(
                     "   Status: {}",
-                    transaction.status.as_deref().unwrap_or("N/A")
+                    transaction.status.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "N/A".to_string())
                 );
             }
             Err(e) => {

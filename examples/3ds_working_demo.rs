@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 use std::io;
-use sumup_rs::{CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, SumUpClient};
+use sumup_rs::{CardDetails, CheckoutStatus, CreateCheckoutRequest, ProcessCheckoutRequest, SumUpClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,17 +24,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ Environment: PRODUCTION");
 
     // Create a checkout request - matching the TypeScript approach
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: format!("SUMUP-TEST-{}", chrono::Utc::now().timestamp()),
-        amount: 2.00,                // Same amount as TypeScript example
-        currency: "GBP".to_string(), // Explicitly set to GBP like TypeScript
-        merchant_code: merchant_profile.merchant_code.clone(),
-        description: Some("3DS Test Payment".to_string()),
-        return_url: Some("https://webhook.site/your-unique-url".to_string()),
-        customer_id: None,
-        purpose: None,
-        redirect_url: None,
-    };
+    let checkout_request = CreateCheckoutRequest::new(
+        format!("SUMUP-TEST-{}", chrono::Utc::now().timestamp()),
+        2.00,
+        "GBP",
+        merchant_profile.merchant_code.clone(),
+    )
+    .description("3DS Test Payment")
+    .return_url("https://webhook.site/your-unique-url");
 
     println!("\n🔄 Creating checkout...");
 
@@ -46,21 +43,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Status: {}", checkout.status);
 
     // Process payment with the EXACT same card details from TypeScript
-    let process_request = ProcessCheckoutRequest {
-        payment_type: "card".to_string(),
-        installments: None,
-        card: Some(CardDetails {
-            // Test card details for 3DS authentication
-            number: "4000000000003220".to_string(), // 3DS test card
-            expiry_month: "12".to_string(),
-            expiry_year: "2025".to_string(),
-            cvv: "123".to_string(),
-            name: Some("Test Customer".to_string()),
-        }),
-        token: None,
-        customer_id: None,
-        personal_details: None,
-    };
+    let process_request = ProcessCheckoutRequest::card(CardDetails {
+        number: "4000000000003220".to_string(),
+        expiry_month: "12".to_string(),
+        expiry_year: "2025".to_string(),
+        cvv: "123".to_string(),
+        name: Some("Test Customer".to_string()),
+    });
 
     println!("\n🔄 Processing payment...");
     println!("   Card: 4000000000003220");
@@ -138,7 +127,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             println!(
                                 "   - ID: {}, Status: {}",
                                 transaction.id,
-                                transaction.status.as_deref().unwrap_or("Unknown")
+                                transaction.status.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "Unknown".to_string())
                             );
                         }
                     }
@@ -215,19 +204,19 @@ async fn check_payment_status(client: &SumUpClient, checkout_id: &str) {
                         println!(
                             "   Transaction: {} - {}",
                             transaction.id,
-                            transaction.status.as_deref().unwrap_or("Unknown")
+                            transaction.status.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "Unknown".to_string())
                         );
                     }
                 }
 
-                match checkout.status.as_str() {
-                    "PAID" => {
+                match checkout.status {
+                    CheckoutStatus::Paid => {
                         println!("🎉 PAYMENT SUCCESSFUL!");
                         println!("   💰 3DS authentication completed!");
                         println!("   💳 Payment has been processed!");
                         return;
                     }
-                    "FAILED" => {
+                    CheckoutStatus::Failed => {
                         println!("❌ Payment failed");
                         println!("   This could be due to:");
                         println!("   - 3DS authentication failed");
@@ -235,21 +224,17 @@ async fn check_payment_status(client: &SumUpClient, checkout_id: &str) {
                         println!("   - Insufficient funds");
                         return;
                     }
-                    "CANCELLED" => {
-                        println!("🚫 Payment cancelled");
+                    CheckoutStatus::Expired => {
+                        println!("🚫 Payment expired");
                         return;
                     }
-                    "PENDING" => {
+                    CheckoutStatus::Pending => {
                         println!("⏳ Payment still pending...");
                         println!("   Waiting for 3DS authentication to complete...");
                         if attempts < max_attempts {
                             println!("   Checking again in 10 seconds...");
                             tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
                         }
-                    }
-                    _ => {
-                        println!("❓ Unknown status: {}", checkout.status);
-                        return;
                     }
                 }
             }

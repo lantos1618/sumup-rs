@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 use sumup_rs::{
-    CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, ProcessCheckoutResponse,
+    CardDetails, CheckoutStatus, CreateCheckoutRequest, ProcessCheckoutRequest, ProcessCheckoutResponse,
     SumUpClient,
 };
 
@@ -23,46 +23,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 2. Create a checkout
     println!("\n2. Creating a new checkout...");
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: format!("rust-sdk-test-{}", chrono::Utc::now().timestamp()),
-        amount: 15.75,
-        currency: merchant_profile.currency.clone(),
-        merchant_code: merchant_profile.merchant_code.clone(),
-        description: Some("Test purchase from Rust SDK".to_string()),
-        return_url: Some("https://example.com/payment/success".to_string()),
-        customer_id: None,
-        purpose: None,
-        redirect_url: None,
-    };
+    let checkout_request = CreateCheckoutRequest::new(
+        format!("rust-sdk-test-{}", chrono::Utc::now().timestamp()),
+        15.75,
+        merchant_profile.currency.clone(),
+        merchant_profile.merchant_code.clone(),
+    )
+    .description("Test purchase from Rust SDK")
+    .return_url("https://example.com/payment/success");
 
     let checkout = client.create_checkout(&checkout_request).await?;
     println!("   ✅ Checkout created with ID: {}", checkout.id);
 
     // 3. Process the checkout with test card details
     println!("\n3. Processing the checkout with a test card...");
-    let process_request = ProcessCheckoutRequest {
-        payment_type: "card".to_string(),
-        installments: None,
-        card: Some(CardDetails {
-            // Using a standard success test card from SumUp docs
-            number: "4242424242424242".to_string(),
-            expiry_month: "12".to_string(),
-            expiry_year: "2025".to_string(),
-            cvv: "123".to_string(), // ✅ FIXED: Now uses 'cvv' instead of 'cvc'
-            name: Some("Test Customer".to_string()),
-        }),
-        token: None,
-        customer_id: None,
-        personal_details: None,
-    };
+    let process_request = ProcessCheckoutRequest::card(CardDetails {
+        number: "4242424242424242".to_string(),
+        expiry_month: "12".to_string(),
+        expiry_year: "2025".to_string(),
+        cvv: "123".to_string(),
+        name: Some("Test Customer".to_string()),
+    });
 
     match client
         .process_checkout(&checkout.id, &process_request)
         .await
     {
         Ok(ProcessCheckoutResponse::Success(processed_checkout)) => {
-            match processed_checkout.status.as_str() {
-                "PAID" => {
+            match processed_checkout.status {
+                CheckoutStatus::Paid => {
                     println!("   ✅ Payment successful!");
                     println!(
                         "      Transaction ID: {}",
@@ -72,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .unwrap_or("N/A")
                     );
                 }
-                "FAILED" => {
+                CheckoutStatus::Failed => {
                     println!("   ❌ Payment failed!");
                     println!("      Status: {}", processed_checkout.status);
                     if !processed_checkout.transactions.is_empty() {
@@ -81,12 +70,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             processed_checkout.transactions[0].id,
                             processed_checkout.transactions[0]
                                 .status
-                                .as_deref()
-                                .unwrap_or("Unknown")
+                                .as_ref()
+                                .map(|s| s.to_string())
+                                .unwrap_or_else(|| "Unknown".to_string())
                         );
                     }
                 }
-                "PENDING" => {
+                CheckoutStatus::Pending => {
                     println!("   ⏳ Payment pending...");
                     println!("      Status: {}", processed_checkout.status);
                 }

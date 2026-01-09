@@ -44,17 +44,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 3. Create a checkout
     println!("\n3. Creating a checkout...");
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: format!("order_{}", chrono::Utc::now().timestamp()),
-        amount: 9.99,
-        currency: profile.currency.clone(),
-        merchant_code: profile.merchant_code.clone(),
-        description: Some("Test purchase".to_string()),
-        return_url: Some("https://example.com/return".to_string()),
-        customer_id: Some(customer.customer_id.clone()),
-        purpose: None,
-        redirect_url: None,
-    };
+    let checkout_request = CreateCheckoutRequest::new(
+        format!("order_{}", chrono::Utc::now().timestamp()),
+        9.99,
+        profile.currency.clone(),
+        profile.merchant_code.clone(),
+    )
+    .description("Test purchase")
+    .return_url("https://example.com/return")
+    .customer_id(customer.customer_id.clone());
     let checkout = client.create_checkout(&checkout_request).await?;
     println!("   Created checkout: {} ({})", checkout.id, checkout.status);
 

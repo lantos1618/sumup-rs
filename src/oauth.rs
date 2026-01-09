@@ -68,6 +68,32 @@ impl OAuthClient {
         }
     }
 
+    /// Handle OAuth token response, converting errors to our error type.
+    async fn handle_token_response(
+        response: reqwest::Response,
+        error_title: &str,
+    ) -> Result<TokenResponse> {
+        if response.status().is_success() {
+            Ok(response.json::<TokenResponse>().await?)
+        } else {
+            let status = response.status().as_u16();
+            let body = response.text().await.unwrap_or_default();
+            Err(crate::Error::ApiError {
+                status,
+                body: crate::ApiErrorBody {
+                    error_type: None,
+                    title: Some(error_title.to_string()),
+                    status: Some(status),
+                    detail: Some(body),
+                    error_code: None,
+                    message: None,
+                    param: None,
+                    additional_fields: std::collections::HashMap::new(),
+                },
+            })
+        }
+    }
+
     /// Build the authorization URL to redirect users to.
     pub fn authorization_url(&self, scopes: &[Scope], state: Option<&str>) -> String {
         let scope_str: String = scopes.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(" ");
@@ -108,25 +134,7 @@ impl OAuthClient {
             .send()
             .await?;
 
-        if response.status().is_success() {
-            Ok(response.json::<TokenResponse>().await?)
-        } else {
-            let status = response.status().as_u16();
-            let body = response.text().await.unwrap_or_default();
-            Err(crate::Error::ApiError {
-                status,
-                body: crate::ApiErrorBody {
-                    error_type: None,
-                    title: Some("OAuth token exchange failed".to_string()),
-                    status: Some(status),
-                    detail: Some(body),
-                    error_code: None,
-                    message: None,
-                    param: None,
-                    additional_fields: std::collections::HashMap::new(),
-                },
-            })
-        }
+        Self::handle_token_response(response, "OAuth token exchange failed").await
     }
 
     /// Refresh an access token using a refresh token.
@@ -146,25 +154,7 @@ impl OAuthClient {
             .send()
             .await?;
 
-        if response.status().is_success() {
-            Ok(response.json::<TokenResponse>().await?)
-        } else {
-            let status = response.status().as_u16();
-            let body = response.text().await.unwrap_or_default();
-            Err(crate::Error::ApiError {
-                status,
-                body: crate::ApiErrorBody {
-                    error_type: None,
-                    title: Some("OAuth token refresh failed".to_string()),
-                    status: Some(status),
-                    detail: Some(body),
-                    error_code: None,
-                    message: None,
-                    param: None,
-                    additional_fields: std::collections::HashMap::new(),
-                },
-            })
-        }
+        Self::handle_token_response(response, "OAuth token refresh failed").await
     }
 
     /// Get tokens using client credentials (server-to-server, limited endpoint support).
@@ -186,24 +176,6 @@ impl OAuthClient {
             .send()
             .await?;
 
-        if response.status().is_success() {
-            Ok(response.json::<TokenResponse>().await?)
-        } else {
-            let status = response.status().as_u16();
-            let body = response.text().await.unwrap_or_default();
-            Err(crate::Error::ApiError {
-                status,
-                body: crate::ApiErrorBody {
-                    error_type: None,
-                    title: Some("OAuth client credentials failed".to_string()),
-                    status: Some(status),
-                    detail: Some(body),
-                    error_code: None,
-                    message: None,
-                    param: None,
-                    additional_fields: std::collections::HashMap::new(),
-                },
-            })
-        }
+        Self::handle_token_response(response, "OAuth client credentials failed").await
     }
 }

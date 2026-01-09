@@ -25,17 +25,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ Environment: SANDBOX");
 
     // Create a checkout request
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: format!("sandbox-debug-{}", chrono::Utc::now().timestamp()),
-        amount: 10.00,
-        currency: merchant_profile.currency.clone(),
-        merchant_code: merchant_profile.merchant_code.clone(),
-        description: Some("Sandbox 3DS Debug Test".to_string()),
-        return_url: Some("https://webhook.site/your-unique-url".to_string()),
-        customer_id: None,
-        purpose: None,
-        redirect_url: None,
-    };
+    let checkout_request = CreateCheckoutRequest::new(
+        format!("sandbox-debug-{}", chrono::Utc::now().timestamp()),
+        10.00,
+        merchant_profile.currency.clone(),
+        merchant_profile.merchant_code.clone(),
+    )
+    .description("Sandbox 3DS Debug Test")
+    .return_url("https://webhook.site/your-unique-url");
 
     println!("\n🔄 Creating payment intent...");
 
@@ -57,20 +54,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (card_number, description) in test_cards {
         println!("\n🔄 Testing card: {} ({})", card_number, description);
 
-        let process_request = ProcessCheckoutRequest {
-            payment_type: "card".to_string(),
-            installments: None,
-            card: Some(CardDetails {
-                number: card_number.to_string(),
-                expiry_month: "12".to_string(),
-                expiry_year: "2025".to_string(),
-                cvv: "123".to_string(),
-                name: Some("Test Customer".to_string()),
-            }),
-            token: None,
-            customer_id: None,
-            personal_details: None,
-        };
+        let process_request = ProcessCheckoutRequest::card(CardDetails {
+            number: card_number.to_string(),
+            expiry_month: "12".to_string(),
+            expiry_year: "2025".to_string(),
+            cvv: "123".to_string(),
+            name: Some("Test Customer".to_string()),
+        });
 
         match client
             .process_checkout(&checkout.id, &process_request)

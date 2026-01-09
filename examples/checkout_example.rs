@@ -20,17 +20,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Using merchant code: {}", merchant_profile.merchant_code);
 
     // Create a checkout request
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: format!("order-{}", chrono::Utc::now().timestamp()),
-        amount: 25.50,
-        currency: merchant_profile.currency.clone(),
-        merchant_code: merchant_profile.merchant_code.clone(),
-        description: Some("Coffee and pastry".to_string()),
-        return_url: Some("https://your-app.com/return".to_string()),
-        customer_id: None,
-        purpose: None,
-        redirect_url: None,
-    };
+    let checkout_request = CreateCheckoutRequest::new(
+        format!("order-{}", chrono::Utc::now().timestamp()),
+        25.50,
+        merchant_profile.currency.clone(),
+        merchant_profile.merchant_code.clone(),
+    )
+    .description("Coffee and pastry")
+    .return_url("https://your-app.com/return");
 
     println!("Creating checkout...");
 
@@ -87,7 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .get_available_payment_methods(
                     &merchant_profile.merchant_code,
                     Some(25.50),
-                    Some(&merchant_profile.currency),
+                    Some(merchant_profile.currency.as_str()),
                 )
                 .await
             {
@@ -105,21 +102,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            // Example of processing a checkout (commented out as it requires real payment details)
-            let process_request = ProcessCheckoutRequest {
-                payment_type: "card".to_string(),
-                installments: None,
-                card: Some(CardDetails {
-                    number: "4111111111111111".to_string(),
-                    expiry_month: "12".to_string(),
-                    expiry_year: "2025".to_string(),
-                    cvv: "123".to_string(),
-                    name: Some("John Doe".to_string()),
-                }),
-                token: None,
-                customer_id: None,
-                personal_details: None,
-            };
+            // Example of processing a checkout
+            let process_request = ProcessCheckoutRequest::card(CardDetails {
+                number: "4111111111111111".to_string(),
+                expiry_month: "12".to_string(),
+                expiry_year: "2025".to_string(),
+                cvv: "123".to_string(),
+                name: Some("John Doe".to_string()),
+            });
 
             match client
                 .process_checkout(&checkout.id, &process_request)

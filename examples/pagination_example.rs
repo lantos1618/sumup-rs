@@ -1,5 +1,5 @@
 #![allow(clippy::type_complexity)]
-use sumup_rs::{CheckoutListQuery, SumUpClient, TransactionHistoryQuery};
+use sumup_rs::{CheckoutListQuery, CheckoutStatus, SumUpClient, TransactionHistoryQuery};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 transaction.id,
                 transaction.amount,
                 transaction.currency,
-                transaction.status.as_deref().unwrap_or("Unknown")
+                transaction.status.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "Unknown".to_string())
             );
         }
 
@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Get the newest time from the last transaction for the next page
         if let Some(last_transaction) = history.items.last() {
-            newest_time = Some(last_transaction.timestamp.clone());
+            newest_time = Some(last_transaction.timestamp.to_rfc3339());
         } else {
             break;
         }
@@ -91,7 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Query for paid checkouts with specific reference
     let query = CheckoutListQuery {
         checkout_reference: Some("order-123".to_string()),
-        status: Some("PAID".to_string()),
+        status: Some(CheckoutStatus::Paid),
         merchant_code: Some(merchant_code.to_string()),
         customer_id: None,
         limit: Some(5),

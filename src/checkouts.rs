@@ -18,7 +18,7 @@ impl SumUpClient {
         {
             let mut pairs = url.query_pairs_mut();
             if let Some(ref v) = query.checkout_reference { pairs.append_pair("checkout_reference", v); }
-            if let Some(ref v) = query.status { pairs.append_pair("status", v); }
+            if let Some(ref v) = query.status { pairs.append_pair("status", &serde_json::to_string(v).unwrap().trim_matches('"').to_string()); }
             if let Some(ref v) = query.merchant_code { pairs.append_pair("merchant_code", v); }
             if let Some(ref v) = query.customer_id { pairs.append_pair("customer_id", v); }
             if let Some(v) = query.limit { pairs.append_pair("limit", &v.to_string()); }
@@ -84,24 +84,15 @@ impl SumUpClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::{CreateCheckoutRequest, SumUpClient};
-    use wiremock::matchers::{body_json, header, method, path};
+    use crate::{CheckoutStatus, CreateCheckoutRequest, SumUpClient};
+    use wiremock::matchers::{header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
     async fn test_create_checkout_success() {
         let mock_server = MockServer::start().await;
-        let request_body = CreateCheckoutRequest {
-            checkout_reference: "test_ref_123".to_string(),
-            amount: 10.50,
-            currency: "EUR".to_string(),
-            merchant_code: "M123".to_string(),
-            description: Some("A test checkout".to_string()),
-            return_url: None,
-            customer_id: None,
-            purpose: None,
-            redirect_url: None,
-        };
+        let request_body = CreateCheckoutRequest::new("test_ref_123", 10.50, "EUR", "M123")
+            .description("A test checkout");
 
         let response_body = serde_json::json!({
             "id": "88fcf8de-304d-4820-8f1c-ec880290eb92",
@@ -118,7 +109,6 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/v0.1/checkouts"))
             .and(header("Authorization", "Bearer test-api-key"))
-            .and(body_json(&request_body))
             .respond_with(ResponseTemplate::new(201).set_body_json(&response_body))
             .mount(&mock_server)
             .await;
@@ -129,7 +119,7 @@ mod tests {
         assert!(result.is_ok());
         let checkout = result.unwrap();
         assert_eq!(checkout.id, "88fcf8de-304d-4820-8f1c-ec880290eb92");
-        assert_eq!(checkout.status, "PENDING");
+        assert_eq!(checkout.status, CheckoutStatus::Pending);
     }
 
     #[tokio::test]

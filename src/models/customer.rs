@@ -19,8 +19,9 @@ pub struct PersonalDetails {
     pub email: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub phone: Option<String>,
+    /// Birth date in ISO 8601 format (YYYY-MM-DD), e.g. "1990-01-15"
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub birth_date: Option<String>, // YYYY-MM-DD
+    pub birth_date: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tax_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

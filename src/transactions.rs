@@ -77,7 +77,7 @@ impl SumUpClient {
             }).await?;
 
             let has_next = Self::has_next_page_from_history(&history);
-            let last_ts = history.items.last().map(|t| t.timestamp.clone());
+            let last_ts = history.items.last().map(|t| t.timestamp.to_rfc3339());
 
             all_transactions.extend(history.items);
 

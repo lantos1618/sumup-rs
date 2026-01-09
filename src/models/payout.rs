@@ -1,3 +1,4 @@
+use super::enums::{Currency, PayoutStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -6,8 +7,8 @@ pub struct Payout {
     pub id: String,
     pub merchant_code: String,
     pub amount: f64,
-    pub currency: String,
-    pub status: String, // PENDING, PROCESSING, COMPLETED, FAILED
+    pub currency: Currency,
+    pub status: PayoutStatus,
     pub created_at: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub completed_at: Option<DateTime<Utc>>,

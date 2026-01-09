@@ -1,7 +1,7 @@
 #![allow(clippy::type_complexity)]
 use std::io::{self, Write};
 use std::time::Duration;
-use sumup_rs::{CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, SumUpClient};
+use sumup_rs::{CardDetails, CheckoutStatus, CreateCheckoutRequest, ProcessCheckoutRequest, SumUpClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -27,17 +27,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ Currency: {}", merchant_profile.currency);
 
     // Create a checkout request
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: format!("3ds-comprehensive-{}", chrono::Utc::now().timestamp()),
-        amount: 100.00, // Higher amount for better 3DS triggering
-        currency: merchant_profile.currency.clone(),
-        merchant_code: merchant_profile.merchant_code.clone(),
-        description: Some("Comprehensive 3DS Payment Demo".to_string()),
-        return_url: Some(webhook_url.clone()),
-        customer_id: None,
-        purpose: None,
-        redirect_url: None,
-    };
+    let checkout_request = CreateCheckoutRequest::new(
+        format!("3ds-comprehensive-{}", chrono::Utc::now().timestamp()),
+        100.00,
+        merchant_profile.currency.clone(),
+        merchant_profile.merchant_code.clone(),
+    )
+    .description("Comprehensive 3DS Payment Demo")
+    .return_url(webhook_url.clone());
 
     println!("\n🔄 Creating payment intent...");
 
@@ -63,20 +60,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (card_number, description) in test_cards {
         println!("\n🔄 Testing card: {} ({})", card_number, description);
 
-        let process_request = ProcessCheckoutRequest {
-            payment_type: "card".to_string(),
-            installments: None,
-            card: Some(CardDetails {
-                number: card_number.to_string(),
-                expiry_month: "12".to_string(),
-                expiry_year: "2025".to_string(),
-                cvv: "123".to_string(),
-                name: Some("3DS Test Customer".to_string()),
-            }),
-            token: None,
-            customer_id: None,
-            personal_details: None,
-        };
+        let process_request = ProcessCheckoutRequest::card(CardDetails {
+            number: card_number.to_string(),
+            expiry_month: "12".to_string(),
+            expiry_year: "2025".to_string(),
+            cvv: "123".to_string(),
+            name: Some("3DS Test Customer".to_string()),
+        });
 
         match client
             .process_checkout(&checkout.id, &process_request)
@@ -208,34 +198,30 @@ async fn monitor_payment_status(client: &SumUpClient, checkout_id: &str) {
                         println!(
                             "     - ID: {}, Status: {}",
                             transaction.id,
-                            transaction.status.as_deref().unwrap_or("Unknown")
+                            transaction.status.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "Unknown".to_string())
                         );
                     }
                 }
 
-                match checkout.status.as_str() {
-                    "PAID" => {
+                match checkout.status {
+                    CheckoutStatus::Paid => {
                         println!("🎉 Payment successful!");
                         break;
                     }
-                    "FAILED" => {
+                    CheckoutStatus::Failed => {
                         println!("❌ Payment failed");
                         break;
                     }
-                    "CANCELLED" => {
-                        println!("🚫 Payment cancelled");
+                    CheckoutStatus::Expired => {
+                        println!("🚫 Payment expired");
                         break;
                     }
-                    "PENDING" => {
+                    CheckoutStatus::Pending => {
                         println!("⏳ Payment still pending...");
                         if attempts < max_attempts {
                             println!("   Waiting 5 seconds before next check...");
                             tokio::time::sleep(Duration::from_secs(5)).await;
                         }
-                    }
-                    _ => {
-                        println!("❓ Unknown status: {}", checkout.status);
-                        break;
                     }
                 }
             }
