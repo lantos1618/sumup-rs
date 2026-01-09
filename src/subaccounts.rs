@@ -48,37 +48,37 @@ pub struct UpdateOperatorRequest {
 }
 
 impl SumUpClient {
-    /// Lists all operators (subaccounts).
+    /// Lists all operators (subaccounts). [DEPRECATED per OpenAPI spec]
     pub async fn list_operators(&self) -> Result<Vec<Operator>> {
-        let url = self.build_url("/v0.1/subaccounts")?;
+        let url = self.build_url("/v0.1/me/accounts")?;
         let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
         self.handle_response(response).await
     }
 
-    /// Creates a new operator (subaccount).
+    /// Creates a new operator (subaccount). [DEPRECATED per OpenAPI spec]
     pub async fn create_operator(&self, body: &CreateOperatorRequest) -> Result<Operator> {
-        let url = self.build_url("/v0.1/subaccounts")?;
+        let url = self.build_url("/v0.1/me/accounts")?;
         let response = self.http_client.post(url).bearer_auth(&self.api_key).json(body).send().await?;
         self.handle_response(response).await
     }
 
-    /// Retrieves an operator by ID.
+    /// Retrieves an operator by ID. [DEPRECATED per OpenAPI spec]
     pub async fn retrieve_operator(&self, operator_id: &str) -> Result<Operator> {
-        let url = self.build_url(&format!("/v0.1/subaccounts/{}", operator_id))?;
+        let url = self.build_url(&format!("/v0.1/me/accounts/{}", operator_id))?;
         let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
         self.handle_response(response).await
     }
 
-    /// Updates an operator.
+    /// Updates an operator. [DEPRECATED per OpenAPI spec]
     pub async fn update_operator(&self, operator_id: &str, body: &UpdateOperatorRequest) -> Result<Operator> {
-        let url = self.build_url(&format!("/v0.1/subaccounts/{}", operator_id))?;
-        let response = self.http_client.patch(url).bearer_auth(&self.api_key).json(body).send().await?;
+        let url = self.build_url(&format!("/v0.1/me/accounts/{}", operator_id))?;
+        let response = self.http_client.put(url).bearer_auth(&self.api_key).json(body).send().await?;
         self.handle_response(response).await
     }
 
-    /// Disables an operator.
+    /// Disables an operator. [DEPRECATED per OpenAPI spec]
     pub async fn disable_operator(&self, operator_id: &str) -> Result<()> {
-        let url = self.build_url(&format!("/v0.1/subaccounts/{}", operator_id))?;
+        let url = self.build_url(&format!("/v0.1/me/accounts/{}", operator_id))?;
         let response = self.http_client.delete(url).bearer_auth(&self.api_key).send().await?;
         self.handle_empty_response(response).await
     }
