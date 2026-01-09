@@ -1,9 +1,4 @@
-#![allow(
-    clippy::type_complexity,
-    clippy::large_enum_variant,
-    clippy::result_large_err,
-    clippy::if_same_then_else
-)]
+#![allow(clippy::result_large_err)]
 use reqwest::Client;
 use url::Url;
 
@@ -17,11 +12,23 @@ pub mod customers;
 pub mod members;
 pub mod memberships;
 pub mod merchant;
+pub mod oauth;
 pub mod payouts;
 pub mod readers;
 pub mod receipts;
 pub mod roles;
+pub mod subaccounts;
 pub mod transactions;
+pub mod webhooks;
+
+// Re-export OAuth types
+pub use oauth::{OAuthClient, OAuthConfig, Scope, TokenResponse};
+
+// Re-export Subaccount types
+pub use subaccounts::{CreateOperatorRequest, Operator, UpdateOperatorRequest};
+
+// Re-export Webhook types
+pub use webhooks::{WebhookEvent, WebhookEventType, WebhookResponse};
 
 // Re-export query types for convenience
 pub use transactions::TransactionHistoryQuery;
@@ -103,23 +110,20 @@ pub struct SumUpClient {
 }
 
 impl SumUpClient {
+    const BASE_URL: &'static str = "https://api.sumup.com";
+
     /// Creates a new client for the SumUp API.
     ///
     /// # Arguments
     ///
     /// * `api_key` - Your SumUp API key (or OAuth token).
-    /// * `use_sandbox` - Set to `true` to use the sandbox environment.
-    pub fn new(api_key: String, use_sandbox: bool) -> Result<Self> {
-        let base_url_str = if use_sandbox {
-            "https://api.sumup.com" // NOTE: The docs state the same URL for sandbox but to use a sandbox key.
-        } else {
-            "https://api.sumup.com"
-        };
-
+    /// * `_use_sandbox` - Ignored. SumUp uses the same URL for sandbox/production;
+    ///   the environment is determined by your API key type.
+    pub fn new(api_key: String, _use_sandbox: bool) -> Result<Self> {
         Ok(Self {
             http_client: Client::new(),
             api_key,
-            base_url: Url::parse(base_url_str)?,
+            base_url: Url::parse(Self::BASE_URL)?,
         })
     }
 
