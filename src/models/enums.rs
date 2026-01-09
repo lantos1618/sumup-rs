@@ -123,6 +123,110 @@ pub enum MemberStatus {
     Pending,
 }
 
+impl std::fmt::Display for MemberStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Active => write!(f, "ACTIVE"),
+            Self::Inactive => write!(f, "INACTIVE"),
+            Self::Pending => write!(f, "PENDING"),
+        }
+    }
+}
+
+/// Card type (Visa, Mastercard, etc.)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum CardType {
+    Visa,
+    Mastercard,
+    Amex,
+    Discover,
+    Diners,
+    Jcb,
+    Maestro,
+    ElectronVisa,
+    #[serde(other)]
+    Unknown,
+}
+
+impl std::fmt::Display for CardType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Visa => write!(f, "VISA"),
+            Self::Mastercard => write!(f, "MASTERCARD"),
+            Self::Amex => write!(f, "AMEX"),
+            Self::Discover => write!(f, "DISCOVER"),
+            Self::Diners => write!(f, "DINERS"),
+            Self::Jcb => write!(f, "JCB"),
+            Self::Maestro => write!(f, "MAESTRO"),
+            Self::ElectronVisa => write!(f, "ELECTRON_VISA"),
+            Self::Unknown => write!(f, "UNKNOWN"),
+        }
+    }
+}
+
+/// Mandate type for recurring payments
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MandateType {
+    Recurrent,
+    Installments,
+    #[serde(other)]
+    Other,
+}
+
+/// Mandate status
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MandateStatus {
+    Active,
+    Inactive,
+    Pending,
+    Cancelled,
+}
+
+/// Payment instrument type
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PaymentInstrumentType {
+    Card,
+    BankAccount,
+    #[serde(other)]
+    Other,
+}
+
+impl std::fmt::Display for PaymentInstrumentType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Card => write!(f, "card"),
+            Self::BankAccount => write!(f, "bank_account"),
+            Self::Other => write!(f, "other"),
+        }
+    }
+}
+
+/// Receipt status
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ReceiptStatus {
+    Pending,
+    Sent,
+    Failed,
+    #[serde(other)]
+    Unknown,
+}
+
+impl std::fmt::Display for ReceiptStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Pending => write!(f, "PENDING"),
+            Self::Sent => write!(f, "SENT"),
+            Self::Failed => write!(f, "FAILED"),
+            Self::Unknown => write!(f, "UNKNOWN"),
+        }
+    }
+}
+
 /// Currency code (ISO 4217)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -180,7 +284,7 @@ impl From<String> for Currency {
 }
 
 /// Monetary amount in minor units (cents)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct AmountMinor(pub i64);
 
@@ -199,12 +303,6 @@ impl AmountMinor {
 
     pub fn to_major(&self) -> f64 {
         self.0 as f64 / 100.0
-    }
-}
-
-impl Default for AmountMinor {
-    fn default() -> Self {
-        Self(0)
     }
 }
 

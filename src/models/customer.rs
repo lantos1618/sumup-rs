@@ -1,4 +1,5 @@
 use super::common::Card;
+use super::enums::PaymentInstrumentType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -63,7 +64,7 @@ pub struct PaymentInstrument {
     pub token: String,
     pub active: bool,
     #[serde(rename = "type")]
-    pub instrument_type: String,
+    pub instrument_type: PaymentInstrumentType,
     #[serde(default)]
     pub card: Option<Card>,
     pub created_at: DateTime<Utc>,

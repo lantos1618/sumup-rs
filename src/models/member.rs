@@ -1,3 +1,4 @@
+use super::enums::MemberStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -19,9 +20,9 @@ pub struct Member {
     pub id: String,
     pub membership_id: String,
     pub user: User,
-    pub status: String,           // ACTIVE, INACTIVE, PENDING
-    pub roles: Vec<String>,       // Role IDs or names
-    pub permissions: Vec<String>, // Permission strings
+    pub status: MemberStatus,
+    pub roles: Vec<String>,
+    pub permissions: Vec<String>,
     pub created_at: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<DateTime<Utc>>,

@@ -39,7 +39,9 @@ pub enum Error {
     Http(reqwest::Error),
     Json(serde_json::Error),
     Url(url::ParseError),
-    // Structured API error with parsed response body
+    /// Invalid input provided to a method
+    InvalidInput(String),
+    /// Structured API error with parsed response body
     ApiError { status: u16, body: ApiErrorBody },
 }
 
@@ -83,6 +85,7 @@ impl std::fmt::Display for Error {
             Error::Http(e) => write!(f, "HTTP error: {}", e),
             Error::Json(e) => write!(f, "JSON error: {}", e),
             Error::Url(e) => write!(f, "URL error: {}", e),
+            Error::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             Error::ApiError { status, body } => {
                 // Try to provide the most useful error message
                 let status_str = status.to_string();

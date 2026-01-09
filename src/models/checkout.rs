@@ -199,7 +199,9 @@ pub struct AvailablePaymentMethodsResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ProcessCheckoutResponse {
-    Success(Checkout),
+    /// Successful checkout completion (boxed to reduce enum size)
+    Success(Box<Checkout>),
+    /// Checkout requires additional steps (e.g., 3DS authentication)
     Accepted(CheckoutAccepted),
 }
 

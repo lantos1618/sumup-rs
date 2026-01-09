@@ -36,7 +36,10 @@ impl SumUpClient {
         let mut body = serde_json::Map::new();
         body.insert("reason".to_string(), serde_json::Value::String(reason.to_string()));
         if let Some(amt) = amount {
-            body.insert("amount".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(amt).unwrap()));
+            let num = serde_json::Number::from_f64(amt).ok_or_else(|| {
+                crate::Error::InvalidInput(format!("Invalid amount: {} (must be a finite number)", amt))
+            })?;
+            body.insert("amount".to_string(), serde_json::Value::Number(num));
         }
 
         let response = self.http_client.post(url).bearer_auth(&self.api_key).json(&body).send().await?;

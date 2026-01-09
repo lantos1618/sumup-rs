@@ -1,3 +1,4 @@
+use super::enums::{CardType, MandateStatus, MandateType};
 use serde::{Deserialize, Serialize};
 
 // A helper for empty objects {}
@@ -9,7 +10,7 @@ pub struct CardDetails {
     pub number: String,
     pub expiry_month: String,
     pub expiry_year: String,
-    pub cvv: String, // Corrected from `cvc` to `cvv` to match SumUp API specification
+    pub cvv: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -18,14 +19,14 @@ pub struct CardDetails {
 pub struct Card {
     pub last_4_digits: String,
     #[serde(rename = "type")]
-    pub card_type: String,
+    pub card_type: CardType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mandate {
     #[serde(rename = "type")]
-    pub mandate_type: String,
-    pub status: String,
+    pub mandate_type: MandateType,
+    pub status: MandateStatus,
     pub merchant_code: String,
 }
 

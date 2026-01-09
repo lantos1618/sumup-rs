@@ -18,7 +18,7 @@ impl SumUpClient {
         {
             let mut pairs = url.query_pairs_mut();
             if let Some(ref v) = query.checkout_reference { pairs.append_pair("checkout_reference", v); }
-            if let Some(ref v) = query.status { pairs.append_pair("status", &serde_json::to_string(v).unwrap().trim_matches('"').to_string()); }
+            if let Some(ref v) = query.status { pairs.append_pair("status", &v.to_string()); }
             if let Some(ref v) = query.merchant_code { pairs.append_pair("merchant_code", v); }
             if let Some(ref v) = query.customer_id { pairs.append_pair("customer_id", v); }
             if let Some(v) = query.limit { pairs.append_pair("limit", &v.to_string()); }
@@ -55,7 +55,7 @@ impl SumUpClient {
                 if text.contains("next_step") {
                     Ok(ProcessCheckoutResponse::Accepted(serde_json::from_str(&text)?))
                 } else {
-                    Ok(ProcessCheckoutResponse::Success(serde_json::from_str(&text)?))
+                    Ok(ProcessCheckoutResponse::Success(Box::new(serde_json::from_str(&text)?)))
                 }
             }
             _ => self.handle_error(response).await,

@@ -1,3 +1,4 @@
+use super::enums::{Currency, ReceiptStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -7,8 +8,8 @@ pub struct Receipt {
     pub transaction_id: String,
     pub merchant_code: String,
     pub amount: f64,
-    pub currency: String,
-    pub status: String,
+    pub currency: Currency,
+    pub status: ReceiptStatus,
     pub created_at: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub receipt_number: Option<String>,

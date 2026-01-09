@@ -44,8 +44,19 @@ impl WebhookEvent {
     }
 
     /// Parse a webhook event from a JSON string.
-    pub fn from_str(s: &str) -> Result<Self> {
+    ///
+    /// This is a convenience method that wraps the JSON parsing.
+    /// You can also use the `FromStr` trait via `.parse()`.
+    pub fn parse_json(s: &str) -> Result<Self> {
         Ok(serde_json::from_str(s)?)
+    }
+}
+
+impl std::str::FromStr for WebhookEvent {
+    type Err = serde_json::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        serde_json::from_str(s)
     }
 }
 
