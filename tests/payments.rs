@@ -41,13 +41,10 @@ async fn test_process_checkout_with_mock_card_success() {
         .await;
 
     // Now process the checkout with mock card data
-    let process_request = ProcessCheckoutRequest::card(CardDetails {
-        number: "4242424242424242".to_string(),
-        expiry_month: "12".to_string(),
-        expiry_year: "2025".to_string(),
-        cvv: "123".to_string(),
-        name: Some("John Doe".to_string()),
-    });
+    let process_request = ProcessCheckoutRequest::card(
+        CardDetails::new("4242424242424242", "12", "2025", "123")
+            .name("John Doe")
+    );
 
     let processed_response = serde_json::json!({
         "id": "checkout-12345",
@@ -146,13 +143,10 @@ async fn test_process_checkout_with_mock_card_declined() {
         .mount(&mock_server)
         .await;
 
-    let process_request = ProcessCheckoutRequest::card(CardDetails {
-        number: "4000000000000002".to_string(),
-        expiry_month: "12".to_string(),
-        expiry_year: "2025".to_string(),
-        cvv: "123".to_string(),
-        name: Some("John Doe".to_string()),
-    });
+    let process_request = ProcessCheckoutRequest::card(
+        CardDetails::new("4000000000000002", "12", "2025", "123")
+            .name("John Doe")
+    );
 
     // Mock a declined payment response
     let error_response = serde_json::json!({
@@ -237,13 +231,10 @@ async fn test_process_checkout_with_customer_details() {
         }),
     };
 
-    let mut process_request = ProcessCheckoutRequest::card(CardDetails {
-        number: "4242424242424242".to_string(),
-        expiry_month: "12".to_string(),
-        expiry_year: "2025".to_string(),
-        cvv: "123".to_string(),
-        name: Some("Jane Smith".to_string()),
-    })
+    let mut process_request = ProcessCheckoutRequest::card(
+        CardDetails::new("4242424242424242", "12", "2025", "123")
+            .name("Jane Smith")
+    )
     .installments(1)
     .customer_id("cust-123");
     process_request.personal_details = Some(personal_details);
@@ -344,13 +335,10 @@ async fn test_process_checkout_with_real_api() {
             assert_eq!(checkout.status, CheckoutStatus::Pending);
 
             // Now try to process the payment with mock card data
-            let process_request = ProcessCheckoutRequest::card(CardDetails {
-                number: "4242424242424242".to_string(),
-                expiry_month: "12".to_string(),
-                expiry_year: "2025".to_string(),
-                cvv: "123".to_string(),
-                name: Some("Test User".to_string()),
-            });
+            let process_request = ProcessCheckoutRequest::card(
+                CardDetails::new("4242424242424242", "12", "2025", "123")
+                    .name("Test User")
+            );
 
             let payment_result = client
                 .process_checkout(&checkout.id, &process_request)
@@ -430,13 +418,10 @@ async fn test_different_mock_card_types() {
             .mount(&mock_server)
             .await;
 
-        let process_request = ProcessCheckoutRequest::card(CardDetails {
-            number: card_number.to_string(),
-            expiry_month: "12".to_string(),
-            expiry_year: "2025".to_string(),
-            cvv: "123".to_string(),
-            name: Some("Test User".to_string()),
-        });
+        let process_request = ProcessCheckoutRequest::card(
+            CardDetails::new(card_number, "12", "2025", "123")
+                .name("Test User")
+        );
 
         if is_success {
             let success_response = serde_json::json!({

@@ -143,8 +143,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("   Found {} payment instruments", instruments.len());
             for instrument in instruments {
                 println!(
-                    "   - Token: {} (Type: {}, Active: {})",
-                    instrument.token, instrument.instrument_type, instrument.active
+                    "   - Token: {} (Type: {:?}, Active: {:?})",
+                    instrument.token, instrument.card_type, instrument.active
                 );
             }
         }

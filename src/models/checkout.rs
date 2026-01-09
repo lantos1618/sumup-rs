@@ -1,5 +1,5 @@
 use super::common::EmptyObject;
-use super::common::{CardDetails, Mandate, PaymentInstrumentToken};
+use super::common::{CardDetails, Mandate, MandateRequest, PaymentInstrumentToken};
 use super::customer::PersonalDetails;
 use super::enums::{CheckoutPurpose, CheckoutStatus, Currency, PaymentType};
 use super::transaction::Transaction;
@@ -116,6 +116,7 @@ pub struct CheckoutListQuery {
     pub offset: Option<i32>,
 }
 
+/// Request to process a checkout payment (per OpenAPI spec)
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ProcessCheckoutRequest {
     pub payment_type: PaymentType,
@@ -129,6 +130,9 @@ pub struct ProcessCheckoutRequest {
     pub customer_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub personal_details: Option<PersonalDetails>,
+    /// Mandate for recurrent payments
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mandate: Option<MandateRequest>,
 }
 
 impl Default for PaymentType {

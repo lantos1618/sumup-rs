@@ -131,10 +131,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("✅ Found {} payment instruments", instruments.len());
             for (i, instrument) in instruments.iter().enumerate() {
                 println!(
-                    "   {}. Token: {}, Type: {}, Active: {}",
+                    "   {}. Token: {}, Type: {:?}, Active: {:?}",
                     i + 1,
                     instrument.token,
-                    instrument.instrument_type,
+                    instrument.card_type,
                     instrument.active
                 );
             }

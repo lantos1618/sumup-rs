@@ -14,13 +14,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Team Management Example");
     println!("=======================");
-    println!("Merchant: {} ({})\n", profile.name, merchant_code);
+    println!("Merchant: {:?} ({})\n", profile.name, merchant_code);
 
     // List memberships
     println!("1. Memberships:");
     let memberships = client.list_memberships().await?;
     for m in &memberships {
-        println!("   - {} ({})", m.resource_id, m.id);
+        println!("   - {:?} ({})", m.resource_id, m.id);
     }
 
     // Create a role
@@ -31,15 +31,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }).await?;
     println!("   Created: {} ({})", role.name, role.id);
 
-    // Create a member
+    // Create a member (using builder pattern)
     println!("\n3. Creating member...");
-    let member = client.create_member(merchant_code, &CreateMemberRequest {
-        email: "test@example.com".to_string(),
-        first_name: Some("Test".to_string()),
-        last_name: Some("User".to_string()),
-        roles: Some(vec![role.id.clone()]),
-    }).await?;
-    println!("   Created: {} ({})", member.user.email, member.id);
+    let member = client.create_member(merchant_code, &CreateMemberRequest::new(
+        "test@example.com",
+        vec![role.id.clone()]
+    )).await?;
+    println!("   Created: {} ({})", member.email, member.id);
 
     // List roles
     println!("\n4. Roles:");
@@ -50,15 +48,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // List payouts
     println!("\n5. Payouts:");
-    match client.list_merchant_payouts(merchant_code, &PayoutListQuery {
-        start_date: "2024-01-01".to_string(),
-        end_date: "2024-12-31".to_string(),
-        limit: Some(5),
-        offset: None,
-    }).await {
+    match client.list_merchant_payouts(merchant_code, &PayoutListQuery::new(
+        "2024-01-01",
+        "2024-12-31"
+    ).limit(5)).await {
         Ok(payouts) => {
-            for p in &payouts.payouts {
-                println!("   - {} {} ({})", p.amount, p.currency, p.status);
+            for p in &payouts.items {
+                println!("   - {:?} {:?} ({:?})", p.amount, p.currency, p.status);
             }
         }
         Err(e) => println!("   Error: {}", e),

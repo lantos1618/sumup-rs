@@ -103,13 +103,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             // Example of processing a checkout
-            let process_request = ProcessCheckoutRequest::card(CardDetails {
-                number: "4111111111111111".to_string(),
-                expiry_month: "12".to_string(),
-                expiry_year: "2025".to_string(),
-                cvv: "123".to_string(),
-                name: Some("John Doe".to_string()),
-            });
+            let process_request = ProcessCheckoutRequest::card(
+                CardDetails::new("4111111111111111", "12", "2025", "123")
+                    .name("John Doe")
+            );
 
             match client
                 .process_checkout(&checkout.id, &process_request)

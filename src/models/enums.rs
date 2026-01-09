@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-/// Checkout status
+/// Checkout status (per OpenAPI spec)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CheckoutStatus {
     Pending,
-    Failed,
     Paid,
+    Failed,
+    Cancelled,
     Expired,
 }
 
@@ -20,8 +21,9 @@ impl std::fmt::Display for CheckoutStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Pending => write!(f, "PENDING"),
-            Self::Failed => write!(f, "FAILED"),
             Self::Paid => write!(f, "PAID"),
+            Self::Failed => write!(f, "FAILED"),
+            Self::Cancelled => write!(f, "CANCELLED"),
             Self::Expired => write!(f, "EXPIRED"),
         }
     }
@@ -35,17 +37,15 @@ pub enum CheckoutPurpose {
     SetupRecurringPayment,
 }
 
-/// Payment type for processing checkouts
+/// Payment type for processing checkouts (per OpenAPI ProcessCheckout spec)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PaymentType {
     Card,
     Boleto,
     Ideal,
+    Blik,
     Bancontact,
-    Eps,
-    Giropay,
-    Sofort,
     #[serde(other)]
     Other,
 }
@@ -71,27 +71,48 @@ impl std::fmt::Display for PayoutStatus {
     }
 }
 
-/// Card reader status
+/// Card reader status (per OpenAPI spec - lowercase values)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "snake_case")]
 pub enum ReaderStatus {
-    Active,
-    Inactive,
-    Lost,
-    Stolen,
+    /// The reader status is unknown
+    Unknown,
+    /// The reader is created and waits for the physical device to confirm the pairing
+    Processing,
+    /// The reader is paired with a merchant account and can be used with SumUp APIs
+    Paired,
+    /// The pairing is expired and no longer usable with the account
+    Expired,
 }
 
-/// Reader checkout status
+impl std::fmt::Display for ReaderStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unknown => write!(f, "unknown"),
+            Self::Processing => write!(f, "processing"),
+            Self::Paired => write!(f, "paired"),
+            Self::Expired => write!(f, "expired"),
+        }
+    }
+}
+
+/// Reader device model
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum ReaderCheckoutStatus {
-    Pending,
-    Completed,
-    Failed,
-    Cancelled,
+#[serde(rename_all = "kebab-case")]
+pub enum ReaderDeviceModel {
+    Solo,
+    VirtualSolo,
 }
 
-/// Transaction status
+/// Card type for reader checkout (credit vs debit)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReaderCardType {
+    Credit,
+    Debit,
+}
+
+/// Transaction status (per OpenAPI spec)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TransactionStatus {
@@ -100,6 +121,7 @@ pub enum TransactionStatus {
     Failed,
     Pending,
     Refunded,
+    ChargeBack,
 }
 
 impl std::fmt::Display for TransactionStatus {
@@ -110,41 +132,62 @@ impl std::fmt::Display for TransactionStatus {
             Self::Failed => write!(f, "FAILED"),
             Self::Pending => write!(f, "PENDING"),
             Self::Refunded => write!(f, "REFUNDED"),
+            Self::ChargeBack => write!(f, "CHARGE_BACK"),
         }
     }
 }
 
-/// Member status
+/// Membership status (per OpenAPI spec - lowercase values)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum MemberStatus {
+#[serde(rename_all = "snake_case")]
+pub enum MembershipStatus {
     Active,
-    Inactive,
     Pending,
+    Declined,
+    Revoked,
+    #[serde(other)]
+    Unknown,
 }
 
-impl std::fmt::Display for MemberStatus {
+impl Default for MembershipStatus {
+    fn default() -> Self {
+        Self::Pending
+    }
+}
+
+impl std::fmt::Display for MembershipStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Active => write!(f, "ACTIVE"),
-            Self::Inactive => write!(f, "INACTIVE"),
-            Self::Pending => write!(f, "PENDING"),
+            Self::Active => write!(f, "active"),
+            Self::Pending => write!(f, "pending"),
+            Self::Declined => write!(f, "declined"),
+            Self::Revoked => write!(f, "revoked"),
+            Self::Unknown => write!(f, "unknown"),
         }
     }
 }
 
-/// Card type (Visa, Mastercard, etc.)
+/// Card type (Visa, Mastercard, etc.) - per OpenAPI spec
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CardType {
-    Visa,
-    Mastercard,
     Amex,
-    Discover,
+    #[serde(rename = "CUP")]
+    Cup,
     Diners,
+    Discover,
+    #[serde(rename = "ELO")]
+    Elo,
+    #[serde(rename = "ELV")]
+    Elv,
+    Hipercard,
+    #[serde(rename = "JCB")]
     Jcb,
     Maestro,
-    ElectronVisa,
+    Mastercard,
+    Visa,
+    VisaElectron,
+    VisaVpay,
     #[serde(other)]
     Unknown,
 }
@@ -152,25 +195,30 @@ pub enum CardType {
 impl std::fmt::Display for CardType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Visa => write!(f, "VISA"),
-            Self::Mastercard => write!(f, "MASTERCARD"),
             Self::Amex => write!(f, "AMEX"),
-            Self::Discover => write!(f, "DISCOVER"),
+            Self::Cup => write!(f, "CUP"),
             Self::Diners => write!(f, "DINERS"),
+            Self::Discover => write!(f, "DISCOVER"),
+            Self::Elo => write!(f, "ELO"),
+            Self::Elv => write!(f, "ELV"),
+            Self::Hipercard => write!(f, "HIPERCARD"),
             Self::Jcb => write!(f, "JCB"),
             Self::Maestro => write!(f, "MAESTRO"),
-            Self::ElectronVisa => write!(f, "ELECTRON_VISA"),
+            Self::Mastercard => write!(f, "MASTERCARD"),
+            Self::Visa => write!(f, "VISA"),
+            Self::VisaElectron => write!(f, "VISA_ELECTRON"),
+            Self::VisaVpay => write!(f, "VISA_VPAY"),
             Self::Unknown => write!(f, "UNKNOWN"),
         }
     }
 }
 
-/// Mandate type for recurring payments
+/// Mandate type for recurring payments (per OpenAPI spec)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MandateType {
     Recurrent,
-    Installments,
+    Oneoff,
     #[serde(other)]
     Other,
 }

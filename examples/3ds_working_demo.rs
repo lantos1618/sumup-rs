@@ -43,13 +43,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Status: {}", checkout.status);
 
     // Process payment with the EXACT same card details from TypeScript
-    let process_request = ProcessCheckoutRequest::card(CardDetails {
-        number: "4000000000003220".to_string(),
-        expiry_month: "12".to_string(),
-        expiry_year: "2025".to_string(),
-        cvv: "123".to_string(),
-        name: Some("Test Customer".to_string()),
-    });
+    let process_request = ProcessCheckoutRequest::card(
+        CardDetails::new("4000000000003220", "12", "2025", "123")
+            .name("Test Customer")
+    );
 
     println!("\n🔄 Processing payment...");
     println!("   Card: 4000000000003220");
@@ -222,6 +219,10 @@ async fn check_payment_status(client: &SumUpClient, checkout_id: &str) {
                         println!("   - 3DS authentication failed");
                         println!("   - Card declined");
                         println!("   - Insufficient funds");
+                        return;
+                    }
+                    CheckoutStatus::Cancelled => {
+                        println!("🚫 Payment cancelled");
                         return;
                     }
                     CheckoutStatus::Expired => {

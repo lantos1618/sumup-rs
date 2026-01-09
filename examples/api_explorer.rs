@@ -41,19 +41,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Readers
     println!("\n4. Readers:");
     match client.list_merchant_readers(mc).await {
-        Ok(r) => println!("   Found: {}", r.readers.len()),
+        Ok(r) => println!("   Found: {}", r.items.len()),
         Err(e) => println!("   Error: {}", e),
     }
 
     // Payouts
     println!("\n5. Payouts:");
-    match client.list_merchant_payouts(mc, &sumup_rs::payouts::PayoutListQuery {
-        start_date: "2024-01-01".to_string(),
-        end_date: "2024-12-31".to_string(),
-        limit: Some(5),
-        offset: None,
-    }).await {
-        Ok(p) => println!("   Found: {}", p.payouts.len()),
+    match client.list_merchant_payouts(mc, &sumup_rs::payouts::PayoutListQuery::new(
+        "2024-01-01",
+        "2024-12-31"
+    ).limit(5)).await {
+        Ok(p) => println!("   Found: {}", p.items.len()),
         Err(e) => println!("   Error: {}", e),
     }
 

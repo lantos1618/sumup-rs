@@ -34,5 +34,5 @@ pub struct Transaction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auth_code: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub internal_id: Option<i64>,
+    pub internal_id: Option<String>,
 }

@@ -1,9 +1,28 @@
 use crate::{Receipt, Result, SumUpClient};
 use serde::Serialize;
 
+/// Query parameters for retrieving receipts (per OpenAPI spec)
 #[derive(Debug, Clone, Serialize)]
 pub struct ReceiptRetrieveQuery {
+    /// Merchant code (required)
     pub mid: String,
+    /// Transaction event ID (optional, for refund receipts)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_event_id: Option<i32>,
+}
+
+impl ReceiptRetrieveQuery {
+    pub fn new(mid: impl Into<String>) -> Self {
+        Self {
+            mid: mid.into(),
+            tx_event_id: None,
+        }
+    }
+
+    pub fn tx_event_id(mut self, tx_event_id: i32) -> Self {
+        self.tx_event_id = Some(tx_event_id);
+        self
+    }
 }
 
 impl SumUpClient {

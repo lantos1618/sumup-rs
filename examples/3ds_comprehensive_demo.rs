@@ -60,13 +60,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (card_number, description) in test_cards {
         println!("\n🔄 Testing card: {} ({})", card_number, description);
 
-        let process_request = ProcessCheckoutRequest::card(CardDetails {
-            number: card_number.to_string(),
-            expiry_month: "12".to_string(),
-            expiry_year: "2025".to_string(),
-            cvv: "123".to_string(),
-            name: Some("3DS Test Customer".to_string()),
-        });
+        let process_request = ProcessCheckoutRequest::card(
+            CardDetails::new(card_number, "12", "2025", "123")
+                .name("3DS Test Customer")
+        );
 
         match client
             .process_checkout(&checkout.id, &process_request)
@@ -210,6 +207,10 @@ async fn monitor_payment_status(client: &SumUpClient, checkout_id: &str) {
                     }
                     CheckoutStatus::Failed => {
                         println!("❌ Payment failed");
+                        break;
+                    }
+                    CheckoutStatus::Cancelled => {
+                        println!("🚫 Payment cancelled");
                         break;
                     }
                     CheckoutStatus::Expired => {
