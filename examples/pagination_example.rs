@@ -17,6 +17,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             order: Some("desc".to_string()),
             newest_time: newest_time.clone(),
             oldest_time: None,
+            status: None,
+            payment_type: None,
         };
 
         let history = client.list_transactions_history(&merchant_code, &query).await?;

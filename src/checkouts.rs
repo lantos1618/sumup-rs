@@ -24,21 +24,21 @@ impl SumUpClient {
             if let Some(v) = query.limit { pairs.append_pair("limit", &v.to_string()); }
             if let Some(v) = query.offset { pairs.append_pair("offset", &v.to_string()); }
         }
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
     /// Creates a new checkout.
     pub async fn create_checkout(&self, body: &CreateCheckoutRequest) -> Result<Checkout> {
         let url = self.build_url("/v0.1/checkouts")?;
-        let response = self.http_client.post(url).bearer_auth(&self.api_key).json(body).send().await?;
+        let response = self.http_client.post(url).bearer_auth(self.api_key_str()).json(body).send().await?;
         self.handle_response(response).await
     }
 
     /// Retrieves a checkout by ID.
     pub async fn retrieve_checkout(&self, checkout_id: &str) -> Result<Checkout> {
         let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
@@ -46,7 +46,7 @@ impl SumUpClient {
     /// Returns Success for immediate completion, or Accepted for 3DS redirect.
     pub async fn process_checkout(&self, checkout_id: &str, body: &ProcessCheckoutRequest) -> Result<ProcessCheckoutResponse> {
         let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
-        let response = self.http_client.put(url).bearer_auth(&self.api_key).json(body).send().await?;
+        let response = self.http_client.put(url).bearer_auth(self.api_key_str()).json(body).send().await?;
 
         let status = response.status().as_u16();
         match status {
@@ -65,7 +65,7 @@ impl SumUpClient {
     /// Deactivates a checkout.
     pub async fn deactivate_checkout(&self, checkout_id: &str) -> Result<DeletedCheckout> {
         let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
-        let response = self.http_client.delete(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.delete(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
@@ -77,7 +77,7 @@ impl SumUpClient {
             if let Some(v) = amount { pairs.append_pair("amount", &v.to_string()); }
             if let Some(v) = currency { pairs.append_pair("currency", v); }
         }
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 }

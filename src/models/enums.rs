@@ -331,6 +331,12 @@ impl From<String> for Currency {
     }
 }
 
+impl From<&String> for Currency {
+    fn from(s: &String) -> Self {
+        Self(s.clone())
+    }
+}
+
 /// Monetary amount in minor units (cents)
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]

@@ -52,7 +52,7 @@ impl SumUpClient {
     #[deprecated(since = "0.1.0", note = "This endpoint is deprecated in the SumUp OpenAPI spec")]
     pub async fn list_operators(&self) -> Result<Vec<Operator>> {
         let url = self.build_url("/v0.1/me/accounts")?;
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
@@ -60,7 +60,7 @@ impl SumUpClient {
     #[deprecated(since = "0.1.0", note = "This endpoint is deprecated in the SumUp OpenAPI spec")]
     pub async fn create_operator(&self, body: &CreateOperatorRequest) -> Result<Operator> {
         let url = self.build_url("/v0.1/me/accounts")?;
-        let response = self.http_client.post(url).bearer_auth(&self.api_key).json(body).send().await?;
+        let response = self.http_client.post(url).bearer_auth(self.api_key_str()).json(body).send().await?;
         self.handle_response(response).await
     }
 
@@ -68,7 +68,7 @@ impl SumUpClient {
     #[deprecated(since = "0.1.0", note = "This endpoint is deprecated in the SumUp OpenAPI spec")]
     pub async fn retrieve_operator(&self, operator_id: &str) -> Result<Operator> {
         let url = self.build_url(&format!("/v0.1/me/accounts/{}", operator_id))?;
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
@@ -76,7 +76,7 @@ impl SumUpClient {
     #[deprecated(since = "0.1.0", note = "This endpoint is deprecated in the SumUp OpenAPI spec")]
     pub async fn update_operator(&self, operator_id: &str, body: &UpdateOperatorRequest) -> Result<Operator> {
         let url = self.build_url(&format!("/v0.1/me/accounts/{}", operator_id))?;
-        let response = self.http_client.put(url).bearer_auth(&self.api_key).json(body).send().await?;
+        let response = self.http_client.put(url).bearer_auth(self.api_key_str()).json(body).send().await?;
         self.handle_response(response).await
     }
 
@@ -84,7 +84,7 @@ impl SumUpClient {
     #[deprecated(since = "0.1.0", note = "This endpoint is deprecated in the SumUp OpenAPI spec")]
     pub async fn disable_operator(&self, operator_id: &str) -> Result<()> {
         let url = self.build_url(&format!("/v0.1/me/accounts/{}", operator_id))?;
-        let response = self.http_client.delete(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.delete(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_empty_response(response).await
     }
 }

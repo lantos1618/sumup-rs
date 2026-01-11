@@ -232,11 +232,10 @@ async fn test_get_merchant_profile_error() {
     assert!(result.is_err());
     let error = result.unwrap_err();
     match error {
-        sumup_rs::Error::ApiError { status, body } => {
-            assert_eq!(status, 401);
-            assert!(body.error_code.as_ref().unwrap() == "unauthorized");
+        sumup_rs::Error::Unauthorized(_) => {
+            // Expected - 401 now returns Unauthorized error
         }
-        _ => panic!("Expected ApiError, got {:?}", error),
+        _ => panic!("Expected Unauthorized, got {:?}", error),
     }
 }
 

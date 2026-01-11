@@ -1,5 +1,8 @@
 #![allow(clippy::result_large_err)]
+
 use reqwest::Client;
+use secrecy::{ExposeSecret, SecretString};
+use std::time::Duration;
 use url::Url;
 
 // Re-export models for easier access
@@ -34,15 +37,31 @@ pub use webhooks::{WebhookEvent, WebhookEventType, WebhookResponse};
 pub use transactions::TransactionHistoryQuery;
 
 // --- Custom Error Type ---
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
-    Http(reqwest::Error),
-    Json(serde_json::Error),
-    Url(url::ParseError),
-    /// Invalid input provided to a method
+    #[error("HTTP error: {0}")]
+    Http(#[from] reqwest::Error),
+
+    #[error("JSON error: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("URL error: {0}")]
+    Url(#[from] url::ParseError),
+
+    #[error("Invalid input: {0}")]
     InvalidInput(String),
-    /// Structured API error with parsed response body
+
+    #[error("Configuration error: {0}")]
+    Config(String),
+
+    #[error("API error {status}: {}", .body.detail.as_ref().or(.body.message.as_ref()).unwrap_or(&"Unknown error".to_string()))]
     ApiError { status: u16, body: ApiErrorBody },
+
+    #[error("Rate limited. Retry after {retry_after} seconds")]
+    RateLimit { retry_after: u64 },
+
+    #[error("Authentication failed: {0}")]
+    Unauthorized(String),
 }
 
 /// Structured representation of SumUp API error responses
@@ -56,64 +75,84 @@ pub struct ApiErrorBody {
     pub error_code: Option<String>,
     pub message: Option<String>,
     pub param: Option<String>,
-    // Sometimes the API returns additional context
     #[serde(flatten)]
     pub additional_fields: std::collections::HashMap<String, serde_json::Value>,
 }
 
-impl From<reqwest::Error> for Error {
-    fn from(err: reqwest::Error) -> Self {
-        Error::Http(err)
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Self {
-        Error::Json(err)
-    }
-}
-
-impl From<url::ParseError> for Error {
-    fn from(err: url::ParseError) -> Self {
-        Error::Url(err)
-    }
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::Http(e) => write!(f, "HTTP error: {}", e),
-            Error::Json(e) => write!(f, "JSON error: {}", e),
-            Error::Url(e) => write!(f, "URL error: {}", e),
-            Error::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
-            Error::ApiError { status, body } => {
-                // Try to provide the most useful error message
-                let status_str = status.to_string();
-                let message = body
-                    .detail
-                    .as_ref()
-                    .or(body.message.as_ref())
-                    .or(body.title.as_ref())
-                    .unwrap_or(&status_str);
-                write!(f, "API error {}: {}", status, message)
-            }
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
 pub type Result<T> = std::result::Result<T, Error>;
+
+// --- Client Builder ---
+
+/// Builder for configuring a SumUpClient
+#[derive(Default)]
+pub struct SumUpClientBuilder {
+    api_key: Option<SecretString>,
+    base_url: Option<String>,
+    timeout: Option<Duration>,
+}
+
+impl SumUpClientBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the API key (required)
+    pub fn api_key(mut self, key: impl Into<String>) -> Self {
+        self.api_key = Some(SecretString::new(key.into()));
+        self
+    }
+
+    /// Set a custom base URL (default: https://api.sumup.com)
+    pub fn base_url(mut self, url: impl Into<String>) -> Self {
+        self.base_url = Some(url.into());
+        self
+    }
+
+    /// Set request timeout (default: 30 seconds)
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Build the client
+    pub fn build(self) -> Result<SumUpClient> {
+        let api_key = self
+            .api_key
+            .ok_or_else(|| Error::Config("API key is required".into()))?;
+
+        let base_url = self
+            .base_url
+            .unwrap_or_else(|| SumUpClient::BASE_URL.to_string());
+
+        let timeout = self.timeout.unwrap_or(Duration::from_secs(30));
+
+        let http_client = Client::builder()
+            .timeout(timeout)
+            .build()
+            .map_err(Error::Http)?;
+
+        Ok(SumUpClient {
+            http_client,
+            api_key,
+            base_url: Url::parse(&base_url)?,
+        })
+    }
+}
 
 // --- The Main Client ---
 pub struct SumUpClient {
     pub(crate) http_client: Client,
-    pub(crate) api_key: String,
+    pub(crate) api_key: SecretString,
     pub(crate) base_url: Url,
 }
 
 impl SumUpClient {
     const BASE_URL: &'static str = "https://api.sumup.com";
+
+    /// Create a new builder for SumUpClient
+    pub fn builder() -> SumUpClientBuilder {
+        SumUpClientBuilder::new()
+    }
 
     /// Creates a new client for the SumUp API.
     ///
@@ -122,30 +161,26 @@ impl SumUpClient {
     /// * `api_key` - Your SumUp API key (or OAuth token).
     /// * `_use_sandbox` - Ignored. SumUp uses the same URL for sandbox/production;
     ///   the environment is determined by your API key type.
-    pub fn new(api_key: String, _use_sandbox: bool) -> Result<Self> {
-        Ok(Self {
-            http_client: Client::new(),
-            api_key,
-            base_url: Url::parse(Self::BASE_URL)?,
-        })
+    ///
+    /// # Deprecated
+    /// Prefer using `SumUpClient::builder().api_key(key).build()` instead.
+    pub fn new(api_key: impl Into<String>, _use_sandbox: bool) -> Result<Self> {
+        Self::builder().api_key(api_key).build()
     }
 
     /// Creates a new client with a custom base URL.
-    ///
-    /// # Arguments
-    ///
-    /// * `api_key` - Your SumUp API key (or OAuth token).
-    /// * `base_url` - Custom base URL for the API.
-    pub fn with_custom_url(api_key: String, base_url: String) -> Result<Self> {
-        Ok(Self {
-            http_client: Client::new(),
-            api_key,
-            base_url: Url::parse(&base_url)?,
-        })
+    #[deprecated(note = "Use SumUpClient::builder().api_key(key).base_url(url).build() instead")]
+    pub fn with_custom_url(api_key: impl Into<String>, base_url: impl Into<String>) -> Result<Self> {
+        Self::builder().api_key(api_key).base_url(base_url).build()
     }
 
     pub(crate) fn build_url(&self, path: &str) -> Result<Url> {
         Ok(self.base_url.join(path)?)
+    }
+
+    /// Get the API key for use in requests (internal use only)
+    pub(crate) fn api_key_str(&self) -> &str {
+        self.api_key.expose_secret()
     }
 
     /// Handle response - parse JSON on success, error on failure.
@@ -172,6 +207,24 @@ impl SumUpClient {
     /// Helper function to handle API error responses.
     pub(crate) async fn handle_error<T>(&self, response: reqwest::Response) -> Result<T> {
         let status = response.status().as_u16();
+
+        // Check for rate limiting
+        if status == 429 {
+            let retry_after = response
+                .headers()
+                .get("retry-after")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(60);
+            return Err(Error::RateLimit { retry_after });
+        }
+
+        // Check for auth errors
+        if status == 401 {
+            let body = response.text().await.unwrap_or_default();
+            return Err(Error::Unauthorized(body));
+        }
+
         let response_text = response.text().await.unwrap_or_default();
 
         let body = serde_json::from_str::<ApiErrorBody>(&response_text).unwrap_or_else(|_| {
@@ -190,13 +243,18 @@ impl SumUpClient {
         Err(Error::ApiError { status, body })
     }
 
-    /// Get the current API key being used by the client.
-    pub fn api_key(&self) -> &str {
-        &self.api_key
-    }
-
     /// Get the base URL being used by the client.
     pub fn base_url(&self) -> &Url {
         &self.base_url
+    }
+}
+
+// Implement Debug manually to avoid exposing the API key
+impl std::fmt::Debug for SumUpClient {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SumUpClient")
+            .field("base_url", &self.base_url)
+            .field("api_key", &"[REDACTED]")
+            .finish()
     }
 }

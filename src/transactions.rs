@@ -21,7 +21,7 @@ impl SumUpClient {
     /// Lists transaction history for a merchant.
     pub async fn list_transactions_history(&self, merchant_code: &str, query: &TransactionHistoryQuery) -> Result<TransactionHistoryResponse> {
         let url = self.build_url(&format!("/v2.1/merchants/{}/transactions/history", merchant_code))?;
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).query(query).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).query(query).send().await?;
         self.handle_response(response).await
     }
 
@@ -29,7 +29,7 @@ impl SumUpClient {
     pub async fn retrieve_transaction_by_id(&self, merchant_code: &str, transaction_id: &str) -> Result<Transaction> {
         let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code))?;
         url.query_pairs_mut().append_pair("id", transaction_id);
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
@@ -41,7 +41,7 @@ impl SumUpClient {
     ) -> Result<Transaction> {
         let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code))?;
         url.query_pairs_mut().append_pair("client_transaction_id", client_transaction_id);
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
@@ -60,7 +60,7 @@ impl SumUpClient {
             body.insert("amount".to_string(), serde_json::Value::Number(num));
         }
 
-        let response = self.http_client.post(url).bearer_auth(&self.api_key).json(&body).send().await?;
+        let response = self.http_client.post(url).bearer_auth(self.api_key_str()).json(&body).send().await?;
         self.handle_response(response).await
     }
 

@@ -5,7 +5,7 @@ impl SumUpClient {
     #[deprecated(since = "0.1.0", note = "The /v0.1/me endpoint is deprecated in the SumUp OpenAPI spec. Use list_memberships() to get merchant codes, then get_merchant() for details.")]
     pub async fn get_merchant_profile(&self) -> Result<MerchantProfileDetails> {
         let url = self.build_url("/v0.1/me")?;
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         let full_profile: MerchantProfile = self.handle_response(response).await?;
         Ok(full_profile.merchant_profile)
     }
@@ -13,7 +13,7 @@ impl SumUpClient {
     /// Retrieves a specific merchant's profile.
     pub async fn get_merchant(&self, merchant_code: &str) -> Result<Merchant> {
         let url = self.build_url(&format!("/v0.1/merchants/{}", merchant_code))?;
-        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
