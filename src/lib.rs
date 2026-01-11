@@ -9,6 +9,10 @@ use url::Url;
 pub mod models;
 pub use models::*;
 
+// Utility types
+pub mod utils;
+pub use utils::Nullable;
+
 // Declare modules for API endpoints
 pub mod checkouts;
 pub mod customers;
@@ -161,9 +165,6 @@ impl SumUpClient {
     /// * `api_key` - Your SumUp API key (or OAuth token).
     /// * `_use_sandbox` - Ignored. SumUp uses the same URL for sandbox/production;
     ///   the environment is determined by your API key type.
-    ///
-    /// # Deprecated
-    /// Prefer using `SumUpClient::builder().api_key(key).build()` instead.
     pub fn new(api_key: impl Into<String>, _use_sandbox: bool) -> Result<Self> {
         Self::builder().api_key(api_key).build()
     }

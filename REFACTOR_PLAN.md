@@ -7,9 +7,10 @@
 - [x] Semantic errors (RateLimit, Unauthorized)
 - [x] Debug impl hides API key
 
-## Phase 2: Robustness
-- [ ] `reqwest-middleware` with retry logic
-- [ ] `Nullable<T>` for PATCH requests
+## Phase 2: Robustness ✅
+- [x] `Nullable<T>` for PATCH requests (distinguishes absent vs null)
+- [x] `RateLimit` error variant with `retry_after` for user-controlled retries
+- [ ] (Deferred) `reqwest-middleware` - adds complexity, users can retry based on RateLimit error
 
 ## Phase 3: Testing
 - [ ] Feature-gate integration tests
@@ -26,3 +27,10 @@
 - Error enum uses `#[derive(thiserror::Error)]`
 - Added specific error variants: `RateLimit`, `Unauthorized`, `Config`
 - `Debug` for `SumUpClient` shows `[REDACTED]` for API key
+
+### Phase 2 Completed
+- Added `Nullable<T>` type for PATCH request semantics
+  - `Nullable::Absent` = omit field (no change)
+  - `Nullable::Null` = set to null (clear value)
+  - `Nullable::Value(T)` = set to value
+- RateLimit error includes `retry_after` seconds for user-controlled retries
