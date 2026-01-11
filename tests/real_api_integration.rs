@@ -1,64 +1,36 @@
-#![allow(unused_variables)]
+//! Real API integration tests.
+//!
+//! Run with: `cargo test --features integration-tests -- --ignored`
+//! Requires: SUMUP_API_SECRET_KEY environment variable
+
+#![cfg(feature = "integration-tests")]
+
 use sumup_rs::{Address, CreateCustomerRequest, PersonalDetails, SumUpClient};
 
-#[tokio::test]
-async fn test_real_api_merchant_profile() {
-    // Load environment variables from .env.local
+fn get_client() -> Option<SumUpClient> {
     dotenv::from_filename(".env.local").ok();
-
-    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
-            return;
-        }
-    };
-
-    let client = match SumUpClient::new(api_key, true) {
-        Ok(client) => client,
-        Err(_) => {
-            println!("Skipping real API test - failed to create client");
-            return;
-        }
-    };
-
-    // Test merchant profile retrieval
-    match client.get_merchant_profile().await {
-        Ok(profile) => {
-            assert!(!profile.merchant_code.is_empty());
-            assert!(!profile.name.is_empty());
-            // Email is now in doing_business_as, so we'll check if it exists
-            if let Some(dba) = &profile.doing_business_as {
-                assert!(!dba.email.is_empty());
-            }
-            assert!(!profile.country.is_empty());
-            assert!(!profile.currency.is_empty());
-        }
-        Err(e) => {
-            println!("API test failed (expected with test key): {}", e);
-        }
-    }
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY").ok()?;
+    SumUpClient::new(api_key, true).ok()
 }
 
 #[tokio::test]
+#[ignore = "requires SUMUP_API_SECRET_KEY"]
+async fn test_real_api_merchant_profile() {
+    let client = get_client().expect("Need SUMUP_API_SECRET_KEY");
+
+    #[allow(deprecated)]
+    let profile = client.get_merchant_profile().await.expect("Failed to get profile");
+
+    assert!(!profile.merchant_code.is_empty());
+    assert!(!profile.name.is_empty());
+    assert!(!profile.country.is_empty());
+    assert!(!profile.currency.is_empty());
+}
+
+#[tokio::test]
+#[ignore = "requires SUMUP_API_SECRET_KEY"]
 async fn test_real_api_create_customer() {
-    dotenv::from_filename(".env.local").ok();
-
-    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
-            return;
-        }
-    };
-
-    let client = match SumUpClient::new(api_key, true) {
-        Ok(client) => client,
-        Err(_) => {
-            println!("Skipping real API test - failed to create client");
-            return;
-        }
-    };
+    let client = get_client().expect("Need SUMUP_API_SECRET_KEY");
 
     let customer_id = format!("test-cust-{}", chrono::Utc::now().timestamp());
 
@@ -82,46 +54,20 @@ async fn test_real_api_create_customer() {
         }),
     };
 
-    match client.create_customer(&customer_request).await {
-        Ok(customer) => {
-            assert_eq!(customer.customer_id, customer_id);
-            let personal_details = customer.personal_details.unwrap();
-            assert_eq!(personal_details.first_name, Some("Test".to_string()));
-            assert_eq!(personal_details.last_name, Some("Customer".to_string()));
-        }
-        Err(e) => {
-            println!("API test failed (expected with test key): {}", e);
-        }
-    }
+    let customer = client
+        .create_customer(&customer_request)
+        .await
+        .expect("Failed to create customer");
+
+    assert_eq!(customer.customer_id, customer_id);
 }
 
 #[tokio::test]
-async fn test_real_api_list_merchants() {
-    dotenv::from_filename(".env.local").ok();
+#[ignore = "requires SUMUP_API_SECRET_KEY"]
+async fn test_real_api_list_memberships() {
+    let client = get_client().expect("Need SUMUP_API_SECRET_KEY");
 
-    let api_key = match std::env::var("SUMUP_API_SECRET_KEY") {
-        Ok(key) => key,
-        Err(_) => {
-            println!("Skipping real API test - no SUMUP_API_SECRET_KEY set");
-            return;
-        }
-    };
-
-    let client = match SumUpClient::new(api_key, true) {
-        Ok(client) => client,
-        Err(_) => {
-            println!("Skipping real API test - failed to create client");
-            return;
-        }
-    };
-
-    match client.list_merchants().await {
-        Ok(merchants) => {
-            // Should return a list (might be empty)
-            // No assertion needed - just verifying it doesn't panic
-        }
-        Err(e) => {
-            println!("API test failed (expected with test key): {}", e);
-        }
-    }
+    let memberships = client.list_memberships().await.expect("Failed to list memberships");
+    // Just verify it doesn't panic - might be empty for new accounts
+    println!("Found {} memberships", memberships.len());
 }

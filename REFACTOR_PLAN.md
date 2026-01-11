@@ -12,9 +12,10 @@
 - [x] `RateLimit` error variant with `retry_after` for user-controlled retries
 - [ ] (Deferred) `reqwest-middleware` - adds complexity, users can retry based on RateLimit error
 
-## Phase 3: Testing
-- [ ] Feature-gate integration tests
-- [ ] Separate unit vs integration test configs
+## Phase 3: Testing ✅
+- [x] Feature-gate integration tests (`--features integration-tests`)
+- [x] Use `#[ignore]` for tests requiring API key
+- [x] Clean up test boilerplate
 
 ---
 
