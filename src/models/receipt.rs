@@ -1,4 +1,4 @@
-use super::enums::Currency;
+use super::enums::{Amount, Currency, MerchantCode, TransactionId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -8,13 +8,13 @@ pub struct Receipt {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub transaction_id: Option<String>,
+    pub transaction_id: Option<TransactionId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub transaction_code: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub merchant_code: Option<String>,
+    pub merchant_code: Option<MerchantCode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub amount: Option<f64>,
+    pub amount: Option<Amount>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub currency: Option<Currency>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -46,9 +46,9 @@ pub struct ReceiptItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quantity: Option<i32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub price: Option<f64>,
+    pub price: Option<Amount>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub total: Option<f64>,
+    pub total: Option<Amount>,
 }
 
 /// Merchant information on a receipt

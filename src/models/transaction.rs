@@ -1,5 +1,5 @@
 use super::common::Link;
-use super::enums::{Currency, TransactionStatus};
+use super::enums::{Amount, Currency, MerchantCode, TransactionId, TransactionStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -12,9 +12,9 @@ pub struct TransactionHistoryResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    pub id: String,
+    pub id: TransactionId,
     pub transaction_code: String,
-    pub amount: f64,
+    pub amount: Amount,
     pub currency: Currency,
     pub timestamp: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -24,11 +24,11 @@ pub struct Transaction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub installments_count: Option<i32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub merchant_code: Option<String>,
+    pub merchant_code: Option<MerchantCode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub vat_amount: Option<f64>,
+    pub vat_amount: Option<Amount>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tip_amount: Option<f64>,
+    pub tip_amount: Option<Amount>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub entry_mode: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

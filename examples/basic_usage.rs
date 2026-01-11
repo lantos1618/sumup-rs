@@ -1,4 +1,4 @@
-use sumup_rs::{CreateCheckoutRequest, CreateCustomerRequest, PersonalDetails, SumUpClient};
+use sumup_rs::{Amount, CreateCheckoutRequest, CreateCustomerRequest, PersonalDetails, SumUpClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,17 +24,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     println!("Customer: {}", customer.customer_id);
 
-    // Create checkout
+    // Create checkout (amount in cents: 999 = $9.99)
     let checkout = client
         .create_checkout(
             &CreateCheckoutRequest::new(
                 format!("order_{}", chrono::Utc::now().timestamp()),
-                9.99,
+                Amount::from_cents(999),
                 &profile.currency,
                 &profile.merchant_code,
             )
             .description("Test purchase")
-            .customer_id(&customer.customer_id),
+            .customer_id(customer.customer_id.clone()),
         )
         .await?;
     println!("Checkout: {} ({})", checkout.id, checkout.status);

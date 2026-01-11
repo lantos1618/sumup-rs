@@ -1,6 +1,6 @@
 use sumup_rs::{
-    Address, CardDetails, CheckoutStatus, CreateCheckoutRequest, PersonalDetails,
-    ProcessCheckoutRequest, ProcessCheckoutResponse, SumUpClient, TransactionStatus,
+    Address, Amount, CardDetails, CheckoutStatus, CreateCheckoutRequest, CustomerId, PersonalDetails,
+    ProcessCheckoutRequest, ProcessCheckoutResponse, SumUpClient, TransactionId, TransactionStatus,
 };
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -13,7 +13,7 @@ async fn test_process_checkout_with_mock_card_success() {
     // Create a checkout first
     let checkout_request = CreateCheckoutRequest::new(
         "test-payment-123",
-        25.99,
+        Amount::from_cents(2599),
         "EUR",
         "M123",
     )
@@ -78,6 +78,7 @@ async fn test_process_checkout_with_mock_card_success() {
         .await;
 
     // 2. Act: Create client and process payment
+    #[allow(deprecated)]
     let client =
         SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
 
@@ -96,7 +97,7 @@ async fn test_process_checkout_with_mock_card_success() {
     match processed_checkout {
         ProcessCheckoutResponse::Success(checkout) => {
             assert_eq!(checkout.status, CheckoutStatus::Paid);
-            assert_eq!(checkout.transaction_id, Some("txn-67890".to_string()));
+            assert_eq!(checkout.transaction_id, Some(TransactionId::new("txn-67890")));
             assert_eq!(checkout.transaction_code, Some("TXN123".to_string()));
             assert!(!checkout.transactions.is_empty());
             assert_eq!(
@@ -117,7 +118,7 @@ async fn test_process_checkout_with_mock_card_declined() {
 
     let checkout_request = CreateCheckoutRequest::new(
         "test-declined-123",
-        15.50,
+        Amount::from_cents(1550),
         "EUR",
         "M123",
     )
@@ -162,6 +163,7 @@ async fn test_process_checkout_with_mock_card_declined() {
         .mount(&mock_server)
         .await;
 
+    #[allow(deprecated)]
     let client =
         SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
 
@@ -186,7 +188,7 @@ async fn test_process_checkout_with_customer_details() {
 
     let checkout_request = CreateCheckoutRequest::new(
         "test-customer-payment",
-        50.00,
+        Amount::from_cents(5000),
         "EUR",
         "M123",
     )
@@ -270,6 +272,7 @@ async fn test_process_checkout_with_customer_details() {
         .mount(&mock_server)
         .await;
 
+    #[allow(deprecated)]
     let client =
         SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
 
@@ -283,10 +286,10 @@ async fn test_process_checkout_with_customer_details() {
     match processed_checkout {
         ProcessCheckoutResponse::Success(checkout) => {
             assert_eq!(checkout.status, CheckoutStatus::Paid);
-            assert_eq!(checkout.customer_id, Some("cust-123".to_string()));
+            assert_eq!(checkout.customer_id, Some(CustomerId::new("cust-123")));
             assert_eq!(
                 checkout.transaction_id,
-                Some("txn-customer-123".to_string())
+                Some(TransactionId::new("txn-customer-123"))
             );
         }
         ProcessCheckoutResponse::Accepted(_) => {
@@ -315,7 +318,7 @@ async fn test_process_checkout_with_real_api() {
 
     let checkout_request = CreateCheckoutRequest::new(
         checkout_reference.clone(),
-        10.00,
+        Amount::from_cents(1000),
         "EUR",
         "test-merchant",
     )
@@ -392,7 +395,7 @@ async fn test_different_mock_card_types() {
 
         let checkout_request = CreateCheckoutRequest::new(
             format!("test-{}", card_number),
-            10.00,
+            Amount::from_cents(1000),
             "EUR",
             "M123",
         )
@@ -468,6 +471,7 @@ async fn test_different_mock_card_types() {
                 .await;
         }
 
+        #[allow(deprecated)]
         let client =
             SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
 

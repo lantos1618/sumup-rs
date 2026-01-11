@@ -1,22 +1,22 @@
 use super::common::EmptyObject;
 use super::common::{CardDetails, Mandate, MandateRequest, PaymentInstrumentToken};
 use super::customer::PersonalDetails;
-use super::enums::{CheckoutPurpose, CheckoutStatus, Currency, PaymentType};
+use super::enums::{Amount, CheckoutId, CheckoutPurpose, CheckoutStatus, Currency, CustomerId, MerchantCode, PaymentType, TransactionId};
 use super::transaction::Transaction;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Checkout {
-    pub id: String,
+    pub id: CheckoutId,
     pub status: CheckoutStatus,
-    pub amount: f64,
+    pub amount: Amount,
     pub currency: Currency,
     pub date: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checkout_reference: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub merchant_code: Option<String>,
+    pub merchant_code: Option<MerchantCode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -24,7 +24,7 @@ pub struct Checkout {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub valid_until: Option<DateTime<Utc>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub customer_id: Option<String>,
+    pub customer_id: Option<CustomerId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mandate: Option<Mandate>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -32,7 +32,7 @@ pub struct Checkout {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub transaction_code: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub transaction_id: Option<String>,
+    pub transaction_id: Option<TransactionId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub merchant_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -44,15 +44,15 @@ pub struct Checkout {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateCheckoutRequest {
     pub checkout_reference: String,
-    pub amount: f64,
+    pub amount: Amount,
     pub currency: Currency,
-    pub merchant_code: String,
+    pub merchant_code: MerchantCode,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub customer_id: Option<String>,
+    pub customer_id: Option<CustomerId>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub purpose: Option<CheckoutPurpose>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -60,10 +60,15 @@ pub struct CreateCheckoutRequest {
 }
 
 impl CreateCheckoutRequest {
-    pub fn new(checkout_reference: impl Into<String>, amount: f64, currency: impl Into<Currency>, merchant_code: impl Into<String>) -> Self {
+    pub fn new(
+        checkout_reference: impl Into<String>,
+        amount: impl Into<Amount>,
+        currency: impl Into<Currency>,
+        merchant_code: impl Into<MerchantCode>,
+    ) -> Self {
         Self {
             checkout_reference: checkout_reference.into(),
-            amount,
+            amount: amount.into(),
             currency: currency.into(),
             merchant_code: merchant_code.into(),
             description: None,
@@ -84,7 +89,7 @@ impl CreateCheckoutRequest {
         self
     }
 
-    pub fn customer_id(mut self, id: impl Into<String>) -> Self {
+    pub fn customer_id(mut self, id: impl Into<CustomerId>) -> Self {
         self.customer_id = Some(id.into());
         self
     }
@@ -107,9 +112,9 @@ pub struct CheckoutListQuery {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<CheckoutStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub merchant_code: Option<String>,
+    pub merchant_code: Option<MerchantCode>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub customer_id: Option<String>,
+    pub customer_id: Option<CustomerId>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -127,7 +132,7 @@ pub struct ProcessCheckoutRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub customer_id: Option<String>,
+    pub customer_id: Option<CustomerId>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub personal_details: Option<PersonalDetails>,
     /// Mandate for recurrent payments
@@ -163,7 +168,7 @@ impl ProcessCheckoutRequest {
         self
     }
 
-    pub fn customer_id(mut self, id: impl Into<String>) -> Self {
+    pub fn customer_id(mut self, id: impl Into<CustomerId>) -> Self {
         self.customer_id = Some(id.into());
         self
     }
@@ -171,9 +176,9 @@ impl ProcessCheckoutRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeletedCheckout {
-    pub id: String,
+    pub id: CheckoutId,
     pub status: CheckoutStatus,
-    pub amount: f64,
+    pub amount: Amount,
     pub currency: Currency,
     pub date: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

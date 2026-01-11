@@ -1,11 +1,12 @@
 use super::customer::Address;
+use super::enums::{CountryCode, Currency, MerchantCode};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Merchant account information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Merchant {
-    pub merchant_code: String,
+    pub merchant_code: MerchantCode,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -15,9 +16,9 @@ pub struct Merchant {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub address: Option<Address>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub country: Option<String>,
+    pub country: Option<CountryCode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub currency: Option<String>,
+    pub currency: Option<Currency>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timezone: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -38,12 +39,12 @@ pub struct MerchantProfile {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MerchantProfileDetails {
     #[serde(rename = "merchant_code")]
-    pub merchant_code: String,
+    pub merchant_code: MerchantCode,
     #[serde(rename = "company_name")]
     pub name: String,
     #[serde(rename = "default_currency")]
-    pub currency: String,
-    pub country: String,
+    pub currency: Currency,
+    pub country: CountryCode,
     #[serde(rename = "mobile_phone")]
     pub phone: Option<String>,
     pub address: Address,

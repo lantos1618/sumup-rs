@@ -1,4 +1,4 @@
-use super::enums::{Currency, ReaderCardType, ReaderDeviceModel, ReaderStatus};
+use super::enums::{Amount, Currency, MerchantCode, ReaderCardType, ReaderDeviceModel, ReaderStatus, TransactionId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -99,10 +99,10 @@ pub struct TotalAmount {
 }
 
 impl TotalAmount {
-    /// Create a new TotalAmount from major units (e.g., euros/dollars)
-    pub fn from_major(amount: f64, currency: impl Into<Currency>) -> Self {
+    /// Create a new TotalAmount from an Amount (using exact decimal arithmetic)
+    pub fn from_amount(amount: Amount, currency: impl Into<Currency>) -> Self {
         Self {
-            value: (amount * 100.0).round() as u64,
+            value: amount.to_cents() as u64,
             currency: currency.into(),
             minor_unit: 2,
         }
@@ -117,9 +117,9 @@ impl TotalAmount {
         }
     }
 
-    /// Get the value in major units
-    pub fn to_major(&self) -> f64 {
-        self.value as f64 / 10f64.powi(self.minor_unit as i32)
+    /// Get the value as an Amount (exact decimal)
+    pub fn to_amount(&self) -> Amount {
+        Amount::from_cents(self.value as i64)
     }
 }
 
@@ -245,12 +245,12 @@ pub struct ReaderCheckoutStatusPayload {
     /// The unique client transaction ID
     pub client_transaction_id: String,
     /// The merchant code associated with the transaction
-    pub merchant_code: String,
+    pub merchant_code: MerchantCode,
     /// The current status of the transaction
     pub status: ReaderCheckoutTransactionStatus,
     /// The transaction ID (deprecated, use client_transaction_id)
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub transaction_id: Option<String>,
+    pub transaction_id: Option<TransactionId>,
 }
 
 /// Status of a reader checkout transaction

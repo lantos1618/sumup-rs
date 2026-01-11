@@ -11,8 +11,8 @@ impl SumUpClient {
     }
 
     /// Retrieves a specific merchant's profile.
-    pub async fn get_merchant(&self, merchant_code: &str) -> Result<Merchant> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}", merchant_code))?;
+    pub async fn get_merchant(&self, merchant_code: impl AsRef<str>) -> Result<Merchant> {
+        let url = self.build_url(&format!("/v0.1/merchants/{}", merchant_code.as_ref()))?;
         let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }

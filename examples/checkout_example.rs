@@ -1,5 +1,5 @@
 use sumup_rs::{
-    CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, ProcessCheckoutResponse,
+    Amount, CardDetails, CreateCheckoutRequest, ProcessCheckoutRequest, ProcessCheckoutResponse,
     SumUpClient,
 };
 
@@ -13,10 +13,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profile = client.get_merchant_profile().await?;
     println!("Merchant: {}", profile.merchant_code);
 
-    // Create checkout
+    // Create checkout (2550 cents = $25.50)
     let request = CreateCheckoutRequest::new(
         format!("order-{}", chrono::Utc::now().timestamp()),
-        25.50,
+        Amount::from_cents(2550),
         &profile.currency,
         &profile.merchant_code,
     )

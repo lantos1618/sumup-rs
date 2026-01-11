@@ -1,6 +1,6 @@
 use crate::{
-    AvailablePaymentMethodsResponse, Checkout, CheckoutListQuery, CreateCheckoutRequest,
-    DeletedCheckout, ProcessCheckoutRequest, ProcessCheckoutResponse, Result, SumUpClient,
+    Amount, AvailablePaymentMethodsResponse, Checkout, CheckoutListQuery, CreateCheckoutRequest,
+    Currency, DeletedCheckout, ProcessCheckoutRequest, ProcessCheckoutResponse, Result, SumUpClient,
 };
 
 impl SumUpClient {
@@ -19,8 +19,8 @@ impl SumUpClient {
             let mut pairs = url.query_pairs_mut();
             if let Some(ref v) = query.checkout_reference { pairs.append_pair("checkout_reference", v); }
             if let Some(ref v) = query.status { pairs.append_pair("status", &v.to_string()); }
-            if let Some(ref v) = query.merchant_code { pairs.append_pair("merchant_code", v); }
-            if let Some(ref v) = query.customer_id { pairs.append_pair("customer_id", v); }
+            if let Some(ref v) = query.merchant_code { pairs.append_pair("merchant_code", v.as_str()); }
+            if let Some(ref v) = query.customer_id { pairs.append_pair("customer_id", v.as_str()); }
             if let Some(v) = query.limit { pairs.append_pair("limit", &v.to_string()); }
             if let Some(v) = query.offset { pairs.append_pair("offset", &v.to_string()); }
         }
@@ -36,16 +36,16 @@ impl SumUpClient {
     }
 
     /// Retrieves a checkout by ID.
-    pub async fn retrieve_checkout(&self, checkout_id: &str) -> Result<Checkout> {
-        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
+    pub async fn retrieve_checkout(&self, checkout_id: impl AsRef<str>) -> Result<Checkout> {
+        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id.as_ref()))?;
         let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
     /// Processes a checkout (charges the payment instrument).
     /// Returns Success for immediate completion, or Accepted for 3DS redirect.
-    pub async fn process_checkout(&self, checkout_id: &str, body: &ProcessCheckoutRequest) -> Result<ProcessCheckoutResponse> {
-        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
+    pub async fn process_checkout(&self, checkout_id: impl AsRef<str>, body: &ProcessCheckoutRequest) -> Result<ProcessCheckoutResponse> {
+        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id.as_ref()))?;
         let response = self.http_client.put(url).bearer_auth(self.api_key_str()).json(body).send().await?;
 
         let status = response.status().as_u16();
@@ -63,19 +63,19 @@ impl SumUpClient {
     }
 
     /// Deactivates a checkout.
-    pub async fn deactivate_checkout(&self, checkout_id: &str) -> Result<DeletedCheckout> {
-        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id))?;
+    pub async fn deactivate_checkout(&self, checkout_id: impl AsRef<str>) -> Result<DeletedCheckout> {
+        let url = self.build_url(&format!("/v0.1/checkouts/{}", checkout_id.as_ref()))?;
         let response = self.http_client.delete(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
 
     /// Gets available payment methods for a merchant.
-    pub async fn get_available_payment_methods(&self, merchant_code: &str, amount: Option<f64>, currency: Option<&str>) -> Result<AvailablePaymentMethodsResponse> {
-        let mut url = self.build_url(&format!("/v0.1/merchants/{}/payment-methods", merchant_code))?;
+    pub async fn get_available_payment_methods(&self, merchant_code: impl AsRef<str>, amount: Option<Amount>, currency: Option<&Currency>) -> Result<AvailablePaymentMethodsResponse> {
+        let mut url = self.build_url(&format!("/v0.1/merchants/{}/payment-methods", merchant_code.as_ref()))?;
         {
             let mut pairs = url.query_pairs_mut();
             if let Some(v) = amount { pairs.append_pair("amount", &v.to_string()); }
-            if let Some(v) = currency { pairs.append_pair("currency", v); }
+            if let Some(v) = currency { pairs.append_pair("currency", v.as_str()); }
         }
         let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
@@ -84,14 +84,14 @@ impl SumUpClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::{CheckoutStatus, CreateCheckoutRequest, SumUpClient};
+    use crate::{Amount, CheckoutStatus, CreateCheckoutRequest, SumUpClient};
     use wiremock::matchers::{header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
     async fn test_create_checkout_success() {
         let mock_server = MockServer::start().await;
-        let request_body = CreateCheckoutRequest::new("test_ref_123", 10.50, "EUR", "M123")
+        let request_body = CreateCheckoutRequest::new("test_ref_123", Amount::from_cents(1050), "EUR", "M123")
             .description("A test checkout");
 
         let response_body = serde_json::json!({
@@ -113,12 +113,13 @@ mod tests {
             .mount(&mock_server)
             .await;
 
+        #[allow(deprecated)]
         let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
         let result = client.create_checkout(&request_body).await;
 
         assert!(result.is_ok());
         let checkout = result.unwrap();
-        assert_eq!(checkout.id, "88fcf8de-304d-4820-8f1c-ec880290eb92");
+        assert_eq!(checkout.id.as_str(), "88fcf8de-304d-4820-8f1c-ec880290eb92");
         assert_eq!(checkout.status, CheckoutStatus::Pending);
     }
 
@@ -145,11 +146,12 @@ mod tests {
             .mount(&mock_server)
             .await;
 
+        #[allow(deprecated)]
         let client = SumUpClient::with_custom_url("test-api-key".to_string(), mock_server.uri()).unwrap();
         let result = client.retrieve_checkout(checkout_id).await;
 
         assert!(result.is_ok());
         let checkout = result.unwrap();
-        assert_eq!(checkout.id, checkout_id);
+        assert_eq!(checkout.id.as_str(), checkout_id);
     }
 }

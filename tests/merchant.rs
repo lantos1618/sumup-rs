@@ -1,4 +1,4 @@
-use sumup_rs::{DoingBusinessAs, MerchantProfile, MerchantProfileDetails, SumUpClient};
+use sumup_rs::{CountryCode, Currency, DoingBusinessAs, MerchantCode, MerchantProfile, MerchantProfileDetails, SumUpClient};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -6,12 +6,13 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 async fn test_get_merchant_profile_success() {
     // Arrange
     let mock_server = MockServer::start().await;
+    #[allow(deprecated)]
     let client =
         SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
     let _expected_profile = MerchantProfile {
         merchant_profile: MerchantProfileDetails {
-            merchant_code: "merchant_123".to_string(),
+            merchant_code: MerchantCode::new("merchant_123"),
             name: "Test Merchant".to_string(),
             phone: Some("+1234567890".to_string()),
             address: sumup_rs::Address {
@@ -22,8 +23,8 @@ async fn test_get_merchant_profile_success() {
                 postal_code: Some("12345".to_string()),
                 country: Some("US".to_string()),
             },
-            country: "US".to_string(),
-            currency: "USD".to_string(),
+            country: CountryCode::new("US"),
+            currency: Currency::new("USD"),
             website: None,
             doing_business_as: Some(DoingBusinessAs {
                 email: "merchant@test.com".to_string(),
@@ -80,24 +81,26 @@ async fn test_get_merchant_profile_success() {
         .await;
 
     // Act
+    #[allow(deprecated)]
     let result = client.get_merchant_profile().await;
 
     // Assert
     assert!(result.is_ok());
     let profile = result.unwrap();
-    assert_eq!(profile.merchant_code, "merchant_123");
+    assert_eq!(profile.merchant_code.as_str(), "merchant_123");
     assert_eq!(profile.name, "Test Merchant");
     assert_eq!(
         profile.doing_business_as.as_ref().unwrap().email,
         "merchant@test.com"
     );
-    assert_eq!(profile.currency, "USD");
+    assert_eq!(profile.currency.as_str(), "USD");
 }
 
 #[tokio::test]
 async fn test_get_merchant_success() {
     // Arrange
     let mock_server = MockServer::start().await;
+    #[allow(deprecated)]
     let client =
         SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 
@@ -133,16 +136,17 @@ async fn test_get_merchant_success() {
     // Assert
     assert!(result.is_ok());
     let merchant = result.unwrap();
-    assert_eq!(merchant.merchant_code, "merchant_456");
+    assert_eq!(merchant.merchant_code.as_str(), "merchant_456");
     assert_eq!(merchant.name, Some("Another Merchant".to_string()));
     assert_eq!(merchant.email, Some("another@test.com".to_string()));
-    assert_eq!(merchant.currency, Some("CAD".to_string()));
+    assert_eq!(merchant.currency.as_ref().map(|c| c.as_str()), Some("CAD"));
 }
 
 #[tokio::test]
 async fn test_list_merchants_success() {
     // Arrange
     let mock_server = MockServer::start().await;
+    #[allow(deprecated)]
     let client =
         SumUpClient::with_custom_url("test_api_key".to_string(), mock_server.uri()).unwrap();
 

@@ -1,4 +1,4 @@
-use crate::{Result, SumUpClient, Transaction, TransactionHistoryResponse};
+use crate::{Amount, Result, SumUpClient, Transaction, TransactionHistoryResponse};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, Default)]
@@ -19,16 +19,16 @@ pub struct TransactionHistoryQuery {
 
 impl SumUpClient {
     /// Lists transaction history for a merchant.
-    pub async fn list_transactions_history(&self, merchant_code: &str, query: &TransactionHistoryQuery) -> Result<TransactionHistoryResponse> {
-        let url = self.build_url(&format!("/v2.1/merchants/{}/transactions/history", merchant_code))?;
+    pub async fn list_transactions_history(&self, merchant_code: impl AsRef<str>, query: &TransactionHistoryQuery) -> Result<TransactionHistoryResponse> {
+        let url = self.build_url(&format!("/v2.1/merchants/{}/transactions/history", merchant_code.as_ref()))?;
         let response = self.http_client.get(url).bearer_auth(self.api_key_str()).query(query).send().await?;
         self.handle_response(response).await
     }
 
     /// Retrieves a transaction by ID.
-    pub async fn retrieve_transaction_by_id(&self, merchant_code: &str, transaction_id: &str) -> Result<Transaction> {
-        let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code))?;
-        url.query_pairs_mut().append_pair("id", transaction_id);
+    pub async fn retrieve_transaction_by_id(&self, merchant_code: impl AsRef<str>, transaction_id: impl AsRef<str>) -> Result<Transaction> {
+        let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code.as_ref()))?;
+        url.query_pairs_mut().append_pair("id", transaction_id.as_ref());
         let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
     }
@@ -36,10 +36,10 @@ impl SumUpClient {
     /// Retrieves transaction by client transaction id (e.g. from CreateReaderCheckout).
     pub async fn retrieve_transaction_by_client_transaction_id(
         &self,
-        merchant_code: &str,
+        merchant_code: impl AsRef<str>,
         client_transaction_id: &str,
     ) -> Result<Transaction> {
-        let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code))?;
+        let mut url = self.build_url(&format!("/v2.1/merchants/{}/transactions", merchant_code.as_ref()))?;
         url.query_pairs_mut().append_pair("client_transaction_id", client_transaction_id);
         let response = self.http_client.get(url).bearer_auth(self.api_key_str()).send().await?;
         self.handle_response(response).await
@@ -48,13 +48,14 @@ impl SumUpClient {
     /// Refunds a transaction.
     ///
     /// Note: Uses `/v0.1/me/refund/{txn_id}` per OpenAPI spec.
-    pub async fn refund_transaction(&self, _merchant_code: &str, transaction_id: &str, amount: Option<f64>, reason: &str) -> Result<Transaction> {
-        let url = self.build_url(&format!("/v0.1/me/refund/{}", transaction_id))?;
+    pub async fn refund_transaction(&self, _merchant_code: impl AsRef<str>, transaction_id: impl AsRef<str>, amount: Option<Amount>, reason: &str) -> Result<Transaction> {
+        let url = self.build_url(&format!("/v0.1/me/refund/{}", transaction_id.as_ref()))?;
 
         let mut body = serde_json::Map::new();
         body.insert("reason".to_string(), serde_json::Value::String(reason.to_string()));
         if let Some(amt) = amount {
-            let num = serde_json::Number::from_f64(amt).ok_or_else(|| {
+            use rust_decimal::prelude::ToPrimitive;
+            let num = serde_json::Number::from_f64(amt.0.to_f64().unwrap_or(0.0)).ok_or_else(|| {
                 crate::Error::InvalidInput(format!("Invalid amount: {} (must be a finite number)", amt))
             })?;
             body.insert("amount".to_string(), serde_json::Value::Number(num));
@@ -80,7 +81,8 @@ impl SumUpClient {
     }
 
     /// Fetches all transactions by automatically handling pagination.
-    pub async fn list_all_transactions_history(&self, merchant_code: &str, order: Option<&str>, max_pages: Option<usize>) -> Result<Vec<Transaction>> {
+    pub async fn list_all_transactions_history(&self, merchant_code: impl AsRef<str>, order: Option<&str>, max_pages: Option<usize>) -> Result<Vec<Transaction>> {
+        let merchant_code = merchant_code.as_ref();
         let mut all_transactions = Vec::new();
         let mut page_count = 0;
         let mut newest_time: Option<String> = None;

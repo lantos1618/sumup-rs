@@ -1,4 +1,4 @@
-use sumup_rs::{CreateCheckoutRequest, SumUpClient};
+use sumup_rs::{Amount, CreateCheckoutRequest, SumUpClient};
 
 #[tokio::test]
 async fn test_create_checkout_integration() {
@@ -19,10 +19,10 @@ async fn test_create_checkout_integration() {
         }
     };
 
-    // Test creating a checkout
+    // Test creating a checkout (1000 cents = $10.00)
     let checkout_request = CreateCheckoutRequest::new(
         format!("test-checkout-{}", chrono::Utc::now().timestamp()),
-        10.00,
+        Amount::from_cents(1000),
         "EUR",
         "test-merchant",
     )
@@ -38,7 +38,7 @@ async fn test_create_checkout_integration() {
             );
             assert_eq!(checkout.amount, checkout_request.amount);
             assert_eq!(checkout.currency.as_str(), checkout_request.currency.as_str());
-            assert!(!checkout.id.is_empty());
+            assert!(!checkout.id.0.is_empty());
         }
         Err(e) => {
             // Don't fail the test for API errors - this is expected with invalid keys
