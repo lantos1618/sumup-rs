@@ -1,9 +1,4 @@
-#![allow(
-    clippy::type_complexity,
-    clippy::large_enum_variant,
-    clippy::result_large_err,
-    clippy::if_same_then_else
-)]
+#![allow(clippy::result_large_err)]
 use reqwest::Client;
 use url::Url;
 
@@ -17,11 +12,23 @@ pub mod customers;
 pub mod members;
 pub mod memberships;
 pub mod merchant;
+pub mod oauth;
 pub mod payouts;
 pub mod readers;
 pub mod receipts;
 pub mod roles;
+pub mod subaccounts;
 pub mod transactions;
+pub mod webhooks;
+
+// Re-export OAuth types
+pub use oauth::{OAuthClient, OAuthConfig, Scope, TokenResponse};
+
+// Re-export Subaccount types
+pub use subaccounts::{CreateOperatorRequest, Operator, UpdateOperatorRequest};
+
+// Re-export Webhook types
+pub use webhooks::{WebhookEvent, WebhookEventType, WebhookResponse};
 
 // Re-export query types for convenience
 pub use transactions::TransactionHistoryQuery;
@@ -32,7 +39,9 @@ pub enum Error {
     Http(reqwest::Error),
     Json(serde_json::Error),
     Url(url::ParseError),
-    // Structured API error with parsed response body
+    /// Invalid input provided to a method
+    InvalidInput(String),
+    /// Structured API error with parsed response body
     ApiError { status: u16, body: ApiErrorBody },
 }
 
@@ -76,6 +85,7 @@ impl std::fmt::Display for Error {
             Error::Http(e) => write!(f, "HTTP error: {}", e),
             Error::Json(e) => write!(f, "JSON error: {}", e),
             Error::Url(e) => write!(f, "URL error: {}", e),
+            Error::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             Error::ApiError { status, body } => {
                 // Try to provide the most useful error message
                 let status_str = status.to_string();
@@ -103,23 +113,20 @@ pub struct SumUpClient {
 }
 
 impl SumUpClient {
+    const BASE_URL: &'static str = "https://api.sumup.com";
+
     /// Creates a new client for the SumUp API.
     ///
     /// # Arguments
     ///
     /// * `api_key` - Your SumUp API key (or OAuth token).
-    /// * `use_sandbox` - Set to `true` to use the sandbox environment.
-    pub fn new(api_key: String, use_sandbox: bool) -> Result<Self> {
-        let base_url_str = if use_sandbox {
-            "https://api.sumup.com" // NOTE: The docs state the same URL for sandbox but to use a sandbox key.
-        } else {
-            "https://api.sumup.com"
-        };
-
+    /// * `_use_sandbox` - Ignored. SumUp uses the same URL for sandbox/production;
+    ///   the environment is determined by your API key type.
+    pub fn new(api_key: String, _use_sandbox: bool) -> Result<Self> {
         Ok(Self {
             http_client: Client::new(),
             api_key,
-            base_url: Url::parse(base_url_str)?,
+            base_url: Url::parse(Self::BASE_URL)?,
         })
     }
 
@@ -141,30 +148,44 @@ impl SumUpClient {
         Ok(self.base_url.join(path)?)
     }
 
+    /// Handle response - parse JSON on success, error on failure.
+    pub(crate) async fn handle_response<T: serde::de::DeserializeOwned>(
+        &self,
+        response: reqwest::Response,
+    ) -> Result<T> {
+        if response.status().is_success() {
+            Ok(response.json::<T>().await?)
+        } else {
+            self.handle_error(response).await
+        }
+    }
+
+    /// Handle response that returns no body (204 No Content, etc).
+    pub(crate) async fn handle_empty_response(&self, response: reqwest::Response) -> Result<()> {
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            self.handle_error(response).await
+        }
+    }
+
     /// Helper function to handle API error responses.
     pub(crate) async fn handle_error<T>(&self, response: reqwest::Response) -> Result<T> {
         let status = response.status().as_u16();
-
-        // Get the response text first
         let response_text = response.text().await.unwrap_or_default();
 
-        // Try to parse the error response as structured JSON
-        let body = match serde_json::from_str::<ApiErrorBody>(&response_text) {
-            Ok(parsed_body) => parsed_body,
-            Err(_) => {
-                // Fall back to plain text if JSON parsing fails
-                ApiErrorBody {
-                    error_type: None,
-                    title: None,
-                    status: Some(status),
-                    detail: Some(response_text),
-                    error_code: None,
-                    message: None,
-                    param: None,
-                    additional_fields: std::collections::HashMap::new(),
-                }
+        let body = serde_json::from_str::<ApiErrorBody>(&response_text).unwrap_or_else(|_| {
+            ApiErrorBody {
+                error_type: None,
+                title: None,
+                status: Some(status),
+                detail: Some(response_text),
+                error_code: None,
+                message: None,
+                param: None,
+                additional_fields: std::collections::HashMap::new(),
             }
-        };
+        });
 
         Err(Error::ApiError { status, body })
     }

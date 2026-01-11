@@ -1,121 +1,75 @@
 use crate::{Payout, PayoutListResponse, Result, SumUpClient};
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+/// Query parameters for listing payouts (per OpenAPI spec)
+#[derive(Debug, Clone, Serialize, Default)]
 pub struct PayoutListQuery {
-    pub start_date: String, // Required: YYYY-MM-DD format
-    pub end_date: String,   // Required: YYYY-MM-DD format
+    /// Start date (ISO8601 format, required)
+    pub start_date: String,
+    /// End date (ISO8601 format, required)
+    pub end_date: String,
+    /// Response format (json or csv)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
+    /// Maximum number of results
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i32>,
+    /// Sort order (desc or asc)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub offset: Option<i32>,
+    pub order: Option<String>,
+}
+
+impl PayoutListQuery {
+    pub fn new(start_date: impl Into<String>, end_date: impl Into<String>) -> Self {
+        Self {
+            start_date: start_date.into(),
+            end_date: end_date.into(),
+            format: None,
+            limit: None,
+            order: None,
+        }
+    }
+
+    pub fn format(mut self, format: impl Into<String>) -> Self {
+        self.format = Some(format.into());
+        self
+    }
+
+    pub fn limit(mut self, limit: i32) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn order_desc(mut self) -> Self {
+        self.order = Some("desc".to_string());
+        self
+    }
+
+    pub fn order_asc(mut self) -> Self {
+        self.order = Some("asc".to_string());
+        self
+    }
 }
 
 impl SumUpClient {
-    /// Lists all payouts for the authenticated merchant.
-    ///
-    /// # Arguments
-    /// * `query` - Query parameters including required start_date and end_date
-    ///
-    /// Note: This endpoint requires a merchant_code. Use list_merchant_payouts instead.
-    /// The /v1.0/me/payouts endpoint does not exist in the SumUp API.
-    #[deprecated(
-        since = "0.2.0",
-        note = "Use list_merchant_payouts instead. The /me/payouts endpoint does not exist."
-    )]
-    pub async fn list_payouts(&self, _query: &PayoutListQuery) -> Result<PayoutListResponse> {
-        Err(crate::Error::ApiError {
-            status: 404,
-            body: crate::ApiErrorBody {
-                error_type: None,
-                title: Some("Endpoint not implemented".to_string()),
-                status: Some(404),
-                detail: Some("The /v1.0/me/payouts endpoint does not exist in the SumUp API. Use list_merchant_payouts instead.".to_string()),
-                error_code: None,
-                message: None,
-                param: None,
-                additional_fields: std::collections::HashMap::new(),
-            }
-        })
-    }
-
-    /// Lists payouts for a specific merchant.
-    ///
-    /// # Arguments
-    /// * `merchant_code` - The unique merchant code identifier
-    /// * `query` - Query parameters including required start_date and end_date
-    pub async fn list_merchant_payouts(
-        &self,
-        merchant_code: &str,
-        query: &PayoutListQuery,
-    ) -> Result<PayoutListResponse> {
+    /// Lists payouts for a merchant.
+    pub async fn list_merchant_payouts(&self, merchant_code: &str, query: &PayoutListQuery) -> Result<PayoutListResponse> {
         let url = self.build_url(&format!("/v1.0/merchants/{}/payouts", merchant_code))?;
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .query(query)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let payouts = response.json::<PayoutListResponse>().await?;
-            Ok(payouts)
-        } else {
-            self.handle_error(response).await
-        }
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).query(query).send().await?;
+        self.handle_response(response).await
     }
 
-    /// Retrieves an identified payout resource.
-    ///
-    /// # Arguments
-    /// * `payout_id` - The unique payout identifier
+    /// Retrieves a payout by ID.
     pub async fn retrieve_payout(&self, payout_id: &str) -> Result<Payout> {
         let url = self.build_url(&format!("/v1.0/me/payouts/{}", payout_id))?;
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let payout = response.json::<Payout>().await?;
-            Ok(payout)
-        } else {
-            self.handle_error(response).await
-        }
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        self.handle_response(response).await
     }
 
     /// Retrieves a payout for a specific merchant.
-    ///
-    /// # Arguments
-    /// * `merchant_code` - The unique merchant code identifier
-    /// * `payout_id` - The unique payout identifier
-    pub async fn retrieve_merchant_payout(
-        &self,
-        merchant_code: &str,
-        payout_id: &str,
-    ) -> Result<Payout> {
-        let url = self.build_url(&format!(
-            "/v1.0/merchants/{}/payouts/{}",
-            merchant_code, payout_id
-        ))?;
-
-        let response = self
-            .http_client
-            .get(url)
-            .bearer_auth(&self.api_key)
-            .send()
-            .await?;
-
-        if response.status().is_success() {
-            let payout = response.json::<Payout>().await?;
-            Ok(payout)
-        } else {
-            self.handle_error(response).await
-        }
+    pub async fn retrieve_merchant_payout(&self, merchant_code: &str, payout_id: &str) -> Result<Payout> {
+        let url = self.build_url(&format!("/v1.0/merchants/{}/payouts/{}", merchant_code, payout_id))?;
+        let response = self.http_client.get(url).bearer_auth(&self.api_key).send().await?;
+        self.handle_response(response).await
     }
 }

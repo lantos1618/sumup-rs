@@ -1,4 +1,3 @@
-use super::common::Card;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -19,8 +18,9 @@ pub struct PersonalDetails {
     pub email: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub phone: Option<String>,
+    /// Birth date in ISO 8601 format (YYYY-MM-DD), e.g. "1990-01-15"
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub birth_date: Option<String>, // YYYY-MM-DD
+    pub birth_date: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tax_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -55,13 +55,30 @@ pub struct UpdateCustomerRequest {
     pub personal_details: Option<PersonalDetails>,
 }
 
+/// Payment instrument response (per OpenAPI PaymentInstrumentResponse schema)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentInstrument {
+    /// Unique token for the saved card
     pub token: String,
-    pub active: bool,
-    #[serde(rename = "type")]
-    pub instrument_type: String,
-    #[serde(default)]
-    pub card: Option<Card>,
-    pub created_at: DateTime<Utc>,
+    /// Card type (VISA, MASTERCARD, etc.)
+    #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
+    pub card_type: Option<String>,
+    /// Last 4 digits of the card
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_4_digits: Option<String>,
+    /// Expiry month (MM)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expiry_month: Option<String>,
+    /// Expiry year (YYYY)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expiry_year: Option<String>,
+    /// Cardholder name
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cardholder_name: Option<String>,
+    /// Whether the instrument is active
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active: Option<bool>,
+    /// Creation timestamp
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<DateTime<Utc>>,
 }

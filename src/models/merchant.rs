@@ -2,18 +2,31 @@ use super::customer::Address;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+/// Merchant account information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Merchant {
     pub merchant_code: String,
-    pub name: String,
-    pub email: String,
-    pub phone: String,
-    pub address: Address,
-    pub country: String,
-    pub currency: String,
-    pub timezone: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub phone: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub address: Option<Address>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub currency: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timezone: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<DateTime<Utc>>,
+    /// Catch any extra fields
+    #[serde(flatten)]
+    pub extra: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

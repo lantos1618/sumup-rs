@@ -1,28 +1,55 @@
+use super::enums::Currency;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+/// Payout object (fields based on FinancialPayouts schema)
+/// Note: Made flexible with Option types since exact schema is not fully documented
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Payout {
-    pub id: String,
-    pub merchant_code: String,
-    pub amount: f64,
-    pub currency: String,
-    pub status: String, // PENDING, PROCESSING, COMPLETED, FAILED
-    pub created_at: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub completed_at: Option<DateTime<Utc>>,
+    pub id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub amount: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub currency: Option<Currency>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub date: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    /// Transaction code (for some response formats)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transaction_code: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merchant_code: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reference: Option<String>,
+    /// Bank account details
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bank_account: Option<BankAccount>,
+    /// Catch any extra fields
+    #[serde(flatten)]
+    pub extra: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
+/// Bank account information for payouts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BankAccount {
-    pub iban: String,
-    pub bic: String,
-    pub account_holder_name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub iban: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bic: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub account_holder_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bank_name: Option<String>,
 }
 
+/// Response for listing payouts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PayoutListResponse {
-    pub payouts: Vec<Payout>,
+    /// List of payouts (field name may vary by endpoint)
+    #[serde(default, alias = "payouts", alias = "data")]
+    pub items: Vec<Payout>,
 }

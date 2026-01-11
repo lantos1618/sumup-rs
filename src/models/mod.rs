@@ -2,6 +2,7 @@
 pub mod checkout;
 pub mod common;
 pub mod customer;
+pub mod enums;
 pub mod member;
 pub mod membership;
 pub mod merchant;
@@ -14,6 +15,7 @@ pub mod transaction;
 // Re-export commonly used types for convenience
 pub use checkout::*;
 pub use common::*;
+pub use enums::*;
 pub use customer::*;
 pub use member::*;
 pub use membership::*;

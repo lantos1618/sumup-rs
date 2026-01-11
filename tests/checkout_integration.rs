@@ -20,17 +20,15 @@ async fn test_create_checkout_integration() {
     };
 
     // Test creating a checkout
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: format!("test-checkout-{}", chrono::Utc::now().timestamp()),
-        amount: 10.00,
-        currency: "EUR".to_string(),
-        merchant_code: "test-merchant".to_string(),
-        description: Some("Test checkout from Rust client".to_string()),
-        return_url: Some("https://example.com/return".to_string()),
-        customer_id: Some("cust_12345".to_string()),
-        purpose: None,
-        redirect_url: None,
-    };
+    let checkout_request = CreateCheckoutRequest::new(
+        format!("test-checkout-{}", chrono::Utc::now().timestamp()),
+        10.00,
+        "EUR",
+        "test-merchant",
+    )
+    .description("Test checkout from Rust client")
+    .return_url("https://example.com/return")
+    .customer_id("cust_12345");
 
     match client.create_checkout(&checkout_request).await {
         Ok(checkout) => {
@@ -39,7 +37,7 @@ async fn test_create_checkout_integration() {
                 Some(checkout_request.checkout_reference.clone())
             );
             assert_eq!(checkout.amount, checkout_request.amount);
-            assert_eq!(checkout.currency, checkout_request.currency);
+            assert_eq!(checkout.currency.as_str(), checkout_request.currency.as_str());
             assert!(!checkout.id.is_empty());
         }
         Err(e) => {

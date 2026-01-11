@@ -134,9 +134,9 @@ async fn test_get_merchant_success() {
     assert!(result.is_ok());
     let merchant = result.unwrap();
     assert_eq!(merchant.merchant_code, "merchant_456");
-    assert_eq!(merchant.name, "Another Merchant");
-    assert_eq!(merchant.email, "another@test.com");
-    assert_eq!(merchant.currency, "CAD");
+    assert_eq!(merchant.name, Some("Another Merchant".to_string()));
+    assert_eq!(merchant.email, Some("another@test.com".to_string()));
+    assert_eq!(merchant.currency, Some("CAD".to_string()));
 }
 
 #[tokio::test]
@@ -201,10 +201,10 @@ async fn test_list_merchants_success() {
     assert!(result.is_ok());
     let memberships = result.unwrap();
     assert_eq!(memberships.len(), 2);
-    assert_eq!(memberships[0].resource_id, "merchant_1");
-    assert_eq!(memberships[0].resource.name, "First Merchant");
-    assert_eq!(memberships[1].resource_id, "merchant_2");
-    assert_eq!(memberships[1].resource.name, "Second Merchant");
+    assert_eq!(memberships[0].resource_id, Some("merchant_1".to_string()));
+    assert_eq!(memberships[0].resource.as_ref().map(|r| r.name.clone()), Some("First Merchant".to_string()));
+    assert_eq!(memberships[1].resource_id, Some("merchant_2".to_string()));
+    assert_eq!(memberships[1].resource.as_ref().map(|r| r.name.clone()), Some("Second Merchant".to_string()));
 }
 
 #[tokio::test]
