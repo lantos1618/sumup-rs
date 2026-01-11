@@ -1,38 +1,10 @@
 # SumUp API Client for Rust
 
-A comprehensive, type-safe Rust client for the SumUp API. This library provides a complete interface to all SumUp API endpoints with full async/await support.
+A type-safe Rust client for the [SumUp API](https://developer.sumup.com/), built from the official [OpenAPI specification](https://github.com/sumup/sumup-openapi).
 
-## 🚀 Development Status
-
-**✅ Production Ready**: This library is fully implemented and production-ready for core payment operations. All critical APIs are working with comprehensive error handling and type safety.
-
-### ✅ **Fully Implemented & Tested**
-- **Core Payment APIs**: Checkouts, transactions, customers, merchants
-- **3DS Support**: Proper handling of 3DS authentication flows
-- **Error Handling**: Comprehensive error management with structured error types
-- **Type Safety**: Full Rust type definitions for all request/response models
-- **Testing**: Complete test suite with wiremock integration
-
-### ⚠️ **Limited Functionality**
-- **Team Management**: Only memberships listing is implemented (other endpoints don't exist in SumUp API)
-- **Financial APIs**: Payouts and receipts have limited endpoints (merchant-specific only)
-- **Hardware APIs**: Reader management requires merchant codes
-
-For detailed implementation status, see [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md).
-
-## Features
-
-- **Complete API Coverage**: All SumUp API endpoints are supported, including payments, customers, transactions, and team management.
-- **Type Safety**: Full Rust type definitions for all request/response models ensure correctness at compile time.
-- **Async/Await**: Built on Tokio for high-performance, non-blocking I/O.
-- **Robust Error Handling**: Comprehensive error types for handling API, network, and validation errors gracefully.
-- **3DS Support**: Correctly handles 3DS payment flows by differentiating between immediate success and required authentication steps.
-- **Ergonomic Queries**: Type-safe query builders for endpoints with complex filtering and pagination.
-- **Sandbox Support**: Easy switching between production and sandbox environments for safe development and testing.
+> **Note**: This library was created with assistance from Claude (Anthropic).
 
 ## Installation
-
-Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -46,191 +18,48 @@ use sumup_rs::{SumUpClient, CreateCheckoutRequest};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Get API key from environment variable
-    let api_key = std::env::var("SUMUP_API_SECRET_KEY")
-        .expect("Please set SUMUP_API_SECRET_KEY environment variable");
-    
-    // Create a client (use sandbox for testing)
+    let api_key = std::env::var("SUMUP_API_SECRET_KEY")?;
     let client = SumUpClient::new(api_key, true)?;
 
-    // Get your merchant profile to use the correct merchant code
-    let merchant_profile = client.get_merchant_profile().await?;
-    
     // Create a checkout
-    let checkout_request = CreateCheckoutRequest {
-        checkout_reference: "order-123".to_string(),
-        amount: 29.99,
-        currency: merchant_profile.currency.clone(),
-        merchant_code: merchant_profile.merchant_code.clone(),
-        description: Some("Coffee and pastry".to_string()),
-        return_url: Some("https://your-site.com/return".to_string()),
-        customer_id: None,
-        purpose: None,
-        redirect_url: None,
-    };
-    
-    let checkout = client.create_checkout(&checkout_request).await?;
-    println!("Created checkout: {:?}", checkout.id);
-    
+    let checkout = client.create_checkout(
+        &CreateCheckoutRequest::new("order-123", 29.99, "EUR", "MERCHANT_CODE")
+            .description("Coffee and pastry")
+    ).await?;
+
+    println!("Created checkout: {}", checkout.id);
     Ok(())
 }
 ```
 
 ## API Coverage
 
-This client supports all SumUp API endpoints:
-
-### Checkouts
-- Create, retrieve, process, and deactivate checkouts.
-- **Correctly handles 3DS payment flows.**
-- List checkouts with advanced filtering.
-- Get available payment methods.
-
-### Customers
-- Full CRUD operations for customer management.
-- Manage customer payment instruments.
-
-### Transactions
-- List transaction history with powerful, type-safe query parameters.
-- Retrieve full details for any transaction.
-- Refund transactions.
-
-### Merchants
-- Retrieve profiles for the authenticated user or specific merchants.
-- List all merchants accessible to the authenticated user.
-
-### Team Management (Memberships, Roles, Members)
-- **Fully functional and corrected implementation.**
-- Full CRUD operations for memberships, custom roles, and team members.
-- Assign roles and permissions to team members.
-
-### Payouts, Receipts & Readers
-- List and retrieve financial payouts and transaction receipts.
-- Manage physical card readers and initiate in-person payments.
-
-## Error Handling
-
-The client uses a custom `Error` type that provides structured information about API errors:
-
-```rust
-use sumup_rs::{Error, Result};
-
-// ... inside an async function
-match client.create_checkout(&request).await {
-    Ok(checkout) => println!("Success: {:?}", checkout),
-    Err(Error::Http(e)) => eprintln!("HTTP error: {}", e),
-    Err(Error::Json(e)) => eprintln!("JSON error: {}", e),
-    Err(Error::ApiError { status, body }) => {
-        eprintln!("API error (Status {}): {}", status, body.message.as_deref().unwrap_or("No details"));
-    }
-    Err(e) => eprintln!("An unexpected error occurred: {}", e),
-}
-```
+| API | Status |
+|-----|--------|
+| Checkouts (+ 3DS) | Complete |
+| Customers | Complete |
+| Transactions | Complete |
+| Merchants | Complete |
+| Memberships | Complete |
+| Members & Roles | Complete |
+| Payouts | Complete |
+| Receipts | Complete |
+| Readers | Complete |
+| Subaccounts | Deprecated (per OpenAPI spec) |
+| OAuth | Complete |
 
 ## Examples
 
-### Basic Usage
 ```bash
+export SUMUP_API_SECRET_KEY="your-api-key"
 cargo run --example basic_usage
+cargo run --example checkout_example
 ```
 
-### 3DS Payment Testing
-The library includes comprehensive examples for testing 3DS (3D Secure) authentication:
+## OpenAPI Spec Reference
 
-```bash
-# Setup 3DS testing
-cargo run --example setup_3ds_testing
-
-# Basic 3DS demo (automated testing)
-cargo run --example 3ds_payment_demo
-
-# Comprehensive 3DS demo with webhook monitoring
-cargo run --example 3ds_comprehensive_demo
-
-# Manual 3DS testing (recommended for sandbox)
-cargo run --example 3ds_manual_test
-```
-
-#### 3DS Test Cards
-The examples use specific test cards designed to trigger 3DS authentication:
-- `4000000000003220` - Visa (3DS Authentication Required)
-- `4000000000009995` - Visa (3DS with Insufficient Funds)
-- `4000000000000002` - Visa (3DS Declined)
-- `4000000000009987` - Visa (3DS Lost Card)
-- `4000000000009979` - Visa (3DS Stolen Card)
-
-#### 3DS Testing Setup
-1. Get a webhook URL from [webhook.site](https://webhook.site)
-2. Update the `return_url` in the examples
-3. Run the demo and follow the 3DS authentication flow
-
-**Note**: Sandbox 3DS behavior may be limited. Real 3DS testing requires a production environment.
-
-#### Manual 3DS Testing (Recommended)
-For sandbox environments, manual testing is often more reliable:
-1. Run `cargo run --example 3ds_manual_test`
-2. Open the provided checkout URL in your browser
-3. Use test cards to trigger 3DS authentication
-4. Monitor payment status in real-time
-
-### Working Checkout Demo
-```bash
-cargo run --example working_checkout_demo
-```
-
-## 🔧 Development & CI/CD
-
-This project uses automated CI/CD to ensure code quality and reliability:
-
-### **Continuous Integration**
-- **Automated Testing**: All tests run on every push and pull request
-- **Code Quality**: Formatting and linting checks ensure consistent code style
-- **Security Audits**: Automated vulnerability scanning with `cargo audit`
-- **Documentation**: Automatic documentation generation and validation
-
-### **Automated Deployment**
-- **Release Publishing**: Automatic publishing to Crates.io on GitHub releases
-- **Version Management**: Tagged releases trigger the deployment pipeline
-- **Quality Gates**: Only passes tests and security checks are deployed
-
-### **Local Development**
-```bash
-# Run all quality checks locally (recommended)
-./scripts/check.sh
-
-# Or run individual checks
-cargo fmt --all -- --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
-cargo audit
-```
-
-## 📦 Publishing
-
-This crate is automatically published to [Crates.io](https://crates.io/crates/sumup-rs) when:
-1. A new GitHub release is created
-2. All CI/CD checks pass
-3. Security audit is clean
-
-For detailed publishing information, see [DEPLOYMENT.md](./DEPLOYMENT.md).
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### **Development Workflow**
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run the quality checks locally
-5. Submit a pull request
-
-The CI/CD pipeline will automatically validate your changes.
+This library tracks the [official SumUp OpenAPI specification](https://github.com/sumup/sumup-openapi/blob/main/openapi.yaml). Endpoints marked as deprecated in the spec have corresponding `#[deprecated]` attributes in this library.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Disclaimer
-
-This is not an official SumUp product. This library is provided as-is without any warranty. 
+MIT

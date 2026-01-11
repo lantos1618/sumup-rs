@@ -2,20 +2,20 @@ use crate::{Result, SumUpClient, Transaction, TransactionHistoryResponse};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, Default)]
-pub struct TransactionHistoryQuery<'a> {
+pub struct TransactionHistoryQuery {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub order: Option<&'a str>,
+    pub order: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub newest_time: Option<&'a str>,
+    pub newest_time: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub oldest_time: Option<&'a str>,
+    pub oldest_time: Option<String>,
 }
 
 impl SumUpClient {
     /// Lists transaction history for a merchant.
-    pub async fn list_transactions_history(&self, merchant_code: &str, query: &TransactionHistoryQuery<'_>) -> Result<TransactionHistoryResponse> {
+    pub async fn list_transactions_history(&self, merchant_code: &str, query: &TransactionHistoryQuery) -> Result<TransactionHistoryResponse> {
         let url = self.build_url(&format!("/v2.1/merchants/{}/transactions/history", merchant_code))?;
         let response = self.http_client.get(url).bearer_auth(&self.api_key).query(query).send().await?;
         self.handle_response(response).await
@@ -30,8 +30,11 @@ impl SumUpClient {
     }
 
     /// Refunds a transaction.
-    pub async fn refund_transaction(&self, merchant_code: &str, transaction_id: &str, amount: Option<f64>, reason: &str) -> Result<Transaction> {
-        let url = self.build_url(&format!("/v0.1/merchants/{}/transactions/{}/refunds", merchant_code, transaction_id))?;
+    ///
+    /// Note: The `merchant_code` parameter is ignored - this uses the `/v0.1/me/refund/{txn_id}` endpoint
+    /// per the OpenAPI spec.
+    pub async fn refund_transaction(&self, _merchant_code: &str, transaction_id: &str, amount: Option<f64>, reason: &str) -> Result<Transaction> {
+        let url = self.build_url(&format!("/v0.1/me/refund/{}", transaction_id))?;
 
         let mut body = serde_json::Map::new();
         body.insert("reason".to_string(), serde_json::Value::String(reason.to_string()));
@@ -74,8 +77,8 @@ impl SumUpClient {
 
             let history = self.list_transactions_history(merchant_code, &TransactionHistoryQuery {
                 limit: Some(100),
-                order,
-                newest_time: newest_time.as_deref(),
+                order: order.map(|s| s.to_string()),
+                newest_time: newest_time.clone(),
                 oldest_time: None,
             }).await?;
 
